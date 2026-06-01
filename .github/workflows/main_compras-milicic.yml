@@ -2,13 +2,13 @@ name: Deploy static files to Azure Web App
 
 on:
 push:
-branches:
-- main
+  branches:
+    - main
 workflow_dispatch:
 
 jobs:
 deploy:
-runs-on: ubuntu-latest
+  runs-on: ubuntu-latest
 
 ```
 permissions:
