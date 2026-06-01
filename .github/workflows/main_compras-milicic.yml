@@ -33,4 +33,3 @@ steps:
       slot-name: Production
       package: .
 ```
-
