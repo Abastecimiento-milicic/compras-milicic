@@ -4,32 +4,30 @@ on:
   push:
     branches:
       - main
-workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-```
-permissions:
-  id-token: write
-  contents: read
+    permissions:
+      id-token: write
+      contents: read
 
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  - name: Login to Azure
-    uses: azure/login@v2
-    with:
-      client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E592A31658DA4248BAB71C9FBFA68F15 }}
-      tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_85F7970A356745FCAFEF7199BA849CA5 }}
-      subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AD55620DAA8D49DC91E5E42A715470D0 }}
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E592A31658DA4248BAB71C9FBFA68F15 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_85F7970A356745FCAFEF7199BA849CA5 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AD55620DAA8D49DC91E5E42A715470D0 }}
 
-  - name: Deploy to Azure Web App
-    uses: azure/webapps-deploy@v3
-    with:
-      app-name: compras-milicic
-      slot-name: Production
-      package: .
-```
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: compras-milicic
+          slot-name: Production
+          package: .
