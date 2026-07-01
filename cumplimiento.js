@@ -1362,37 +1362,33 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // 1. Comprador Select
-      const buyers = uniqSorted(data.map(r => r[COMPRADOR_COL]));
-      fillSelect("compradorSelect", buyers, "Todos");
+      // 1. Cliente Select
+const clients = uniqSorted(data.map(r => r[CLIENTE_COL]));
+fillSelect("clienteSelect", clients, "Todos");
 
-      // 2. Clasificacion Select
-      const clasifs = uniqSorted(data.map(r => r[CLASIFICACION_COL]));
-      fillSelect("clasificacionSelect", clasifs, "Todos");
+// 2. Comprador Select
+const buyers = uniqSorted(data.map(r => r[COMPRADOR_COL]));
+fillSelect("compradorSelect", buyers, "Todos");
 
-      // 3. Cliente Select
-      const clients = uniqSorted(data.map(r => r[CLIENTE_COL]));
-      fillSelect("clienteSelect", clients, "Todos");
+// 3. Clasificacion Select
+const clasifs = uniqSorted(data.map(r => r[CLASIFICACION_COL]));
+fillSelect("clasificacionSelect", clasifs, "Todos");
 
-      // 4. Clasificacion Pedidos Select
-      const clasifPeds = uniqSorted(data.map(r => r[CLASIF_PEDIDOS_COL]));
-      fillSelect("clasifPedidosSelect", clasifPeds, "Todos");
+// 4. Grupo Compra OC Select
+const ocs = uniqSorted(data.map(r => r[GC_OC_COL]));
+fillSelect("gcocSelect", ocs, "Todos");
 
-      // 5. Grupo Compra Solped Select
-      const solpeds = uniqSorted(data.map(r => r[GC_SOLPED_COL]));
-      fillSelect("gcsolpedSelect", solpeds, "Todos");
+// 5. Centro Select (Nuevo)
+const centros = uniqSorted(data.map(r => r[CENTRO_COL]));
+fillSelect("centroSelect", centros, "Todos");
 
-      // 6. Grupo Compra OC Select
-      const ocs = uniqSorted(data.map(r => r[GC_OC_COL]));
-      fillSelect("gcocSelect", ocs, "Todos");
+// 6. Proveedor Select
+const provs = uniqSorted(data.map(r => r[PROVEEDOR_COL]));
+fillSelect("proveedorSelect", provs, "Todos");
 
-      // 7. Proveedor Select
-      const provs = uniqSorted(data.map(r => r[PROVEEDOR_COL]));
-      fillSelect("proveedorSelect", provs, "Todos");
-
-      // Run initial rendering
-      renderComprasNico();
-      applyAll();
+// Inicializar el nuevo checklist de Abastecimiento
+renderComprasAbastecimiento();
+applyAll();
 
       // Hide Loader
       const loader = document.getElementById("loader");
