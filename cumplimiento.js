@@ -302,19 +302,18 @@ function filteredRowsNoMes() {
   if (provs.length) rows = rows.filter(r => provs.includes(clean(r[PROVEEDOR_COL])));
 
   // 8. Compras Nico (Checklist SI / NO)
-  const nicoVals = getCheckedComprasNico();
-  if (nicoVals.length < 2) {
-    if (nicoVals.includes("SI")) {
+
+  // 8. Solo Compras Abastecimiento (Checklist SI / NO)
+  const abastVals = getCheckedComprasAbastecimiento();
+  if (abastVals.length < 2) {
+    if (abastVals.includes("SI")) {
       rows = rows.filter(r => toNumber(r[COMPRAS_NICO_COL]) === 1);
-    } else if (nicoVals.includes("NO")) {
+    } else if (abastVals.includes("NO")) {
       rows = rows.filter(r => !r[COMPRAS_NICO_COL] || toNumber(r[COMPRAS_NICO_COL]) !== 1);
     } else {
-      rows = []; // none checked
+      rows = []; // ninguno marcado
     }
   }
-
-  return rows;
-}
 
 function filteredRowsByAll() {
   const rows = filteredRowsNoMes();
