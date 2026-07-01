@@ -63,9 +63,9 @@
         <button class="help-btn" onclick="openHelp('filtros-compras')" title="Ayuda sobre los filtros">ℹ</button>
       </div>
       <div class="panel-body">
-        <div class="filters filters-5">
+       
+      <div class="filters filters-5">
           
-          <!-- FILA 1 -->
           <!-- 1. Cliente -->
           <div class="filter">
             <label>CLIENTE</label>
@@ -93,41 +93,38 @@
             <div id="clasifHint" class="hint">Columna: CLASIFICACION</div>
           </div>
 
-          <!-- 4. Clasificación Pedidos -->
-          <div class="filter">
-            <label>CLASIFICACION PEDIDOS</label>
-            <select id="clasifPedidosSelect" multiple size="4" class="multi-select">
-              <option value="__ALL__">Todos</option>
-            </select>
-            <div id="clasifPedidosHint" class="hint">Columna: GCCLASIFICACION</div>
-          </div>
-
-          <!-- 5. Compras Nico Checklist -->
-          <div class="filter">
-            <label>COMPRAS NICO</label>
-            <div id="comprasNicoList" class="check-list">
-              <!-- populated by JS -->
-            </div>
-            <div id="comprasNicoHint" class="hint">Columna: COMPRASNICO</div>
-          </div>
-
-          <!-- FILA 2 -->
-          <!-- 6. Grupo Compra Solped -->
-          <div class="filter">
-            <label>GRUPO COMPRAS SOLPED</label>
-            <select id="gcsolpedSelect" multiple size="4" class="multi-select">
-              <option value="__ALL__">Todos</option>
-            </select>
-            <div id="gcsolpedHint" class="hint">Columna: GRUPO DE COMPRA</div>
-          </div>
-
-          <!-- 7. Grupo Compra OC -->
+          <!-- 4. Grupo Compra OC -->
           <div class="filter">
             <label>GRUPO COMPRAS OC</label>
             <select id="gcocSelect" multiple size="4" class="multi-select">
               <option value="__ALL__">Todos</option>
             </select>
             <div id="gcocHint" class="hint">Columna: GRUPO DE COMPRA OC</div>
+          </div>
+
+          <!-- 5. Mes de Entrega -->
+          <div class="filter">
+            <label>MES DE ENTREGA</label>
+            <select id="mesSelect" multiple size="4" class="multi-select"></select>
+            <div id="mesHint" class="hint">Mes de entrega</div>
+          </div>
+
+          <!-- 6. Centro (NUEVO) -->
+          <div class="filter">
+            <label>CENTRO</label>
+            <select id="centroSelect" multiple size="4" class="multi-select">
+              <option value="__ALL__">Todos</option>
+            </select>
+            <div id="centroHint" class="hint">Columna: CENTRO</div>
+          </div>
+
+          <!-- 7. Solo Compras Abastecimiento (Ex Compras Nico Checklist) -->
+          <div class="filter">
+            <label>SOLO COMPRAS ABASTECIMIENTO</label>
+            <div id="comprasAbastecimientoList" class="check-list">
+              <!-- populated by JS -->
+            </div>
+            <div id="comprasAbastecimientoHint" class="hint">Columna: SOLO COMPRAS ABASTECIMIENTO</div>
           </div>
 
           <!-- 8. Proveedor -->
@@ -139,14 +136,7 @@
             <div id="proveedorHint" class="hint">Columna: PROVEEDOR</div>
           </div>
 
-          <!-- 9. Mes de Entrega -->
-          <div class="filter">
-            <label>MES DE ENTREGA</label>
-            <select id="mesSelect" multiple size="4" class="multi-select"></select>
-            <div id="mesHint" class="hint">Mes de entrega</div>
-          </div>
-
-          <!-- 10. Acciones / Descarga -->
+          <!-- 9. Acciones / Descarga -->
           <div class="filter download-slot" style="display: flex; flex-direction: column; gap: 6px; justify-content: flex-end;">
             <button id="btnDownloadBase" class="btn" style="width: 100%; height: 36px; padding: 0; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px; background: linear-gradient(135deg, #F26716 0%, #C94F0C 100%); color: white; border: none;">
               ⬇ Descargar Base Completa
@@ -156,6 +146,8 @@
             </button>
             <div class="hint" style="text-align: center; width: 100%;">Exporta CSV con ";"</div>
           </div>
+
+        </div>
 
         </div>
       </div>
