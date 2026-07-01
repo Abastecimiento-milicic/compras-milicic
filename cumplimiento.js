@@ -1394,7 +1394,7 @@ applyAll();
       if (loader) loader.classList.add("hidden");
 
       // Set up Event Listeners
-     const elementsToListen = [
+  const elementsToListen = [
   "clienteSelect", "compradorSelect", "clasificacionSelect", 
   "gcocSelect", "centroSelect", "proveedorSelect"
 ];
