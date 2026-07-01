@@ -1399,9 +1399,9 @@ applyAll();
   "gcocSelect", "centroSelect", "proveedorSelect"
 ];
 
-      elementsToListen.forEach(id => {
+     elementsToListen.forEach(id => {
         document.getElementById(id)?.addEventListener("change", (e) => {
-          if (id !== "comprasNicoSelect") enforceAllOption(e.target);
+          enforceAllOption(e.target);
           applyAll(true);
         });
       });
