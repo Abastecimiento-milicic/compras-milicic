@@ -326,8 +326,8 @@ function filteredRowsByAll() {
 
 /* Clasificacion filter converted to standard multi-select */
 
-function renderComprasNico() {
-  const container = document.getElementById("comprasNicoList");
+function renderComprasAbastecimiento() {
+  const container = document.getElementById("comprasAbastecimientoList"); // ID nuevo para el HTML
   if (!container) return;
 
   container.innerHTML = "";
@@ -337,7 +337,7 @@ function renderComprasNico() {
   const allCb = document.createElement("input");
   allCb.type = "checkbox";
   allCb.className = "check-all-cb";
-  allCb.checked = false; // default is only SI checked
+  allCb.checked = false; 
   allLabel.appendChild(allCb);
   allLabel.appendChild(document.createTextNode(" Todos"));
   container.appendChild(allLabel);
@@ -353,34 +353,33 @@ function renderComprasNico() {
     cb.type = "checkbox";
     cb.value = opt.value;
     cb.checked = opt.checked;
-    cb.className = "nico-cb";
+    cb.className = "abast-cb";
     lbl.appendChild(cb);
     lbl.appendChild(document.createTextNode(" " + opt.label));
     container.appendChild(lbl);
   }
 
-  // Add event listeners
   allCb.addEventListener("change", () => {
-    const itemCbs = [...container.querySelectorAll(".nico-cb")];
+    const itemCbs = [...container.querySelectorAll(".abast-cb")];
     itemCbs.forEach(c => c.checked = allCb.checked);
     applyAll();
   });
 
-  container.querySelectorAll(".nico-cb").forEach(cb => {
+  container.querySelectorAll(".abast-cb").forEach(cb => {
     cb.addEventListener("change", () => {
-      const items = [...container.querySelectorAll(".nico-cb")];
+      const items = [...container.querySelectorAll(".abast-cb")];
       allCb.checked = items.every(c => c.checked);
       applyAll();
     });
   });
 }
 
-function getCheckedComprasNico() {
-  const container = document.getElementById("comprasNicoList");
-  if (!container) return ["SI"]; // fallback to default
+function getCheckedComprasAbastecimiento() {
+  const container = document.getElementById("comprasAbastecimientoList");
+  if (!container) return ["SI"]; 
   const allCb = container.querySelector(".check-all-cb");
   if (allCb && allCb.checked) return ["SI", "NO"];
-  const checked = [...container.querySelectorAll(".nico-cb:checked")].map(cb => cb.value);
+  const checked = [...container.querySelectorAll(".abast-cb:checked")].map(cb => cb.value);
   return checked;
 }
 
