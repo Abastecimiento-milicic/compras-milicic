@@ -1395,10 +1395,10 @@ applyAll();
       if (loader) loader.classList.add("hidden");
 
       // Set up Event Listeners
-      const elementsToListen = [
-        "compradorSelect", "clasificacionSelect", "clienteSelect", "clasifPedidosSelect", 
-        "gcsolpedSelect", "gcocSelect", "proveedorSelect"
-      ];
+     const elementsToListen = [
+  "clienteSelect", "compradorSelect", "clasificacionSelect", 
+  "gcocSelect", "centroSelect", "proveedorSelect"
+];
 
       elementsToListen.forEach(id => {
         document.getElementById(id)?.addEventListener("change", (e) => {
