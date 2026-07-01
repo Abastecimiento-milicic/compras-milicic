@@ -270,6 +270,10 @@ function getSingleMes(months) {
 /* ============================
    FILTERING LOGIC
    ============================ */
+
+/* ============================
+   FILTERING LOGIC
+   ============================ */
 function filteredRowsNoMes() {
   let rows = data;
 
@@ -301,8 +305,6 @@ function filteredRowsNoMes() {
   const provs = getSelValues("proveedorSelect");
   if (provs.length) rows = rows.filter(r => provs.includes(clean(r[PROVEEDOR_COL])));
 
-  // 8. Compras Nico (Checklist SI / NO)
-
   // 8. Solo Compras Abastecimiento (Checklist SI / NO)
   const abastVals = getCheckedComprasAbastecimiento();
   if (abastVals.length < 2) {
@@ -314,6 +316,9 @@ function filteredRowsNoMes() {
       rows = []; // ninguno marcado
     }
   }
+
+  return rows;
+}
 
 function filteredRowsByAll() {
   const rows = filteredRowsNoMes();
