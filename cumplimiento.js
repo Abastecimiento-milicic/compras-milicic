@@ -274,6 +274,10 @@ function getSingleMes(months) {
 /* ============================
    FILTERING LOGIC
    ============================ */
+
+/* ============================
+   FILTERING LOGIC
+   ============================ */
 function filteredRowsNoMes() {
   let rows = data;
 
@@ -305,16 +309,10 @@ function filteredRowsNoMes() {
   const provs = getSelValues("proveedorSelect");
   if (provs.length) rows = rows.filter(r => provs.includes(clean(r[PROVEEDOR_COL])));
 
-  // 8. Solo Compras Abastecimiento (Checklist SI / NO)
-  const abastVals = getCheckedComprasAbastecimiento();
-  if (abastVals.length < 2) {
-    if (abastVals.includes("SI")) {
-      rows = rows.filter(r => toNumber(r[COMPRAS_NICO_COL]) === 1);
-    } else if (abastVals.includes("NO")) {
-      rows = rows.filter(r => !r[COMPRAS_NICO_COL] || toNumber(r[COMPRAS_NICO_COL]) !== 1);
-    } else {
-      rows = []; // ninguno marcado
-    }
+  // 8. Solo Compras Abastecimiento (Desplegable SI / NO)
+  const abastVal = document.getElementById("comprasAbastecimientoSelect")?.value ?? "NO";
+  if (abastVal === "SI") {
+    rows = rows.filter(r => toNumber(r[COMPRAS_NICO_COL]) === 1);
   }
 
   return rows;
