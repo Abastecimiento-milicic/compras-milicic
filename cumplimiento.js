@@ -1292,10 +1292,10 @@ function getNoEntregadosRows(rows) {
    RECALCULO DE FILTROS SUBORDINADOS
    ============================ */
 function updateSubordinatedFilters() {
-  // 1. Obtenemos las filas filtradas ÚNICAMENTE por el select de Abastecimiento
+ // 1. Obtenemos las filas filtradas ÚNICAMENTE por el select de Abastecimiento
   let rowsForSub = data;
-  const abastVal = document.getElementById("comprasAbastecimientoSelect")?.value ?? "NO";
-  if (abastVal === "SI") {
+  const abastVals = getSelValues("comprasAbastecimientoSelect");
+  if (abastVals.includes("SI")) {
     rowsForSub = rowsForSub.filter(r => toNumber(r[COMPRAS_NICO_COL]) === 1);
   }
 
