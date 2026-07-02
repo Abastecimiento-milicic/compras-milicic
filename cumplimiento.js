@@ -1288,18 +1288,15 @@ function getNoEntregadosRows(rows) {
 /* ============================
    RECALCULO DE FILTROS SUBORDINADOS
    ============================ */
+/* ============================
+   RECALCULO DE FILTROS SUBORDINADOS
+   ============================ */
 function updateSubordinatedFilters() {
-  // 1. Obtenemos las filas filtradas ÚNICAMENTE por el checklist de Abastecimiento
+  // 1. Obtenemos las filas filtradas ÚNICAMENTE por el select de Abastecimiento
   let rowsForSub = data;
-  const abastVals = getCheckedComprasAbastecimiento();
-  if (abastVals.length < 2) {
-    if (abastVals.includes("SI")) {
-      rowsForSub = rowsForSub.filter(r => toNumber(r[COMPRAS_NICO_COL]) === 1);
-    } else if (abastVals.includes("NO")) {
-      rowsForSub = rowsForSub.filter(r => !r[COMPRAS_NICO_COL] || toNumber(r[COMPRAS_NICO_COL]) !== 1);
-    } else {
-      rowsForSub = [];
-    }
+  const abastVal = document.getElementById("comprasAbastecimientoSelect")?.value ?? "NO";
+  if (abastVal === "SI") {
+    rowsForSub = rowsForSub.filter(r => toNumber(r[COMPRAS_NICO_COL]) === 1);
   }
 
   // 2. Extraemos los valores únicos de esa porción de datos
@@ -1427,10 +1424,11 @@ applyAll();
       if (loader) loader.classList.add("hidden");
 
       // Set up Event Listeners
-  const elementsToListen = [
-  "clienteSelect", "compradorSelect", "clasificacionSelect", 
-  "gcocSelect", "centroSelect", "proveedorSelect"
-];
+ // Set up Event Listeners
+      const elementsToListen = [
+        "clienteSelect", "compradorSelect", "clasificacionSelect", 
+        "gcocSelect", "centroSelect", "proveedorSelect", "comprasAbastecimientoSelect"
+      ];
 
      elementsToListen.forEach(id => {
         document.getElementById(id)?.addEventListener("change", (e) => {
