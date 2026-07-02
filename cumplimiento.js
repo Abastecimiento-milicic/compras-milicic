@@ -1466,7 +1466,7 @@ applyAll();
         downloadCSV(filename, rowsFilt, cols);
       });
 
-      document.getElementById("btnDownloadNO")?.addEventListener("click", () => {
+    document.getElementById("btnDownloadNO")?.addEventListener("click", () => {
         const rowsFilt = filteredRowsByAll();
         const noRows = getNoEntregadosRows(rowsFilt);
 
@@ -1482,6 +1482,25 @@ applyAll();
         const filename = `NO_CUMPLIDOS_COMPRAS_${comprador}_${cliente}_${mes}.csv`;
         
         downloadCSV(filename, noRows, cols);
+      });
+
+      // NUEVO ESCUCHADOR PARA EL BOTÓN AGREGADO
+      document.getElementById("btnDownloadFT")?.addEventListener("click", () => {
+        const rowsFilt = filteredRowsByAll();
+        const ftRows = getFueraDeTerminoRows(rowsFilt);
+
+        if (!ftRows.length) {
+          alert("No hay registros FUERA DE TÉRMINO para los filtros actuales.");
+          return;
+        }
+
+        const cols = headers.slice();
+        const comprador = safeFilePart(selLabel("compradorSelect"));
+        const cliente = safeFilePart(selLabel("clienteSelect"));
+        const mes = safeFilePart(selLabel("mesSelect"));
+        const filename = `FUERA_DE_TERMINO_COMPRAS_${comprador}_${cliente}_${mes}.csv`;
+        
+        downloadCSV(filename, ftRows, cols);
       });
 
       setHTML("msg", "");
