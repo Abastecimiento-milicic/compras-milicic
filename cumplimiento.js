@@ -309,9 +309,9 @@ function filteredRowsNoMes() {
   const provs = getSelValues("proveedorSelect");
   if (provs.length) rows = rows.filter(r => provs.includes(clean(r[PROVEEDOR_COL])));
 
-  // 8. Solo Compras Abastecimiento (Desplegable SI / NO)
-  const abastVal = document.getElementById("comprasAbastecimientoSelect")?.value ?? "NO";
-  if (abastVal === "SI") {
+ // 8. Solo Compras Abastecimiento (Caja de lista fija)
+  const abastVals = getSelValues("comprasAbastecimientoSelect");
+  if (abastVals.includes("SI")) {
     rows = rows.filter(r => toNumber(r[COMPRAS_NICO_COL]) === 1);
   }
 
