@@ -1282,6 +1282,10 @@ function getNoEntregadosRows(rows) {
   return rows.filter(r => toNumber(r[NO_NOCRIT_COL]) > 0 || toNumber(r[NO_CRIT_COL]) > 0);
 }
 
+// NUEVA FUNCIÓN AGREGADA
+function getFueraDeTerminoRows(rows) {
+  return rows.filter(r => toNumber(r[FT_CRIT_COL]) > 0 || toNumber(r[FT_NOCRIT_COL]) > 0);
+}
 /* ============================
    APPLY ALL FILTERS & RE-RENDER
    ============================ */
