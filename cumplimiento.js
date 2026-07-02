@@ -1287,7 +1287,38 @@ function getNoEntregadosRows(rows) {
 /* ============================
    APPLY ALL FILTERS & RE-RENDER
    ============================ */
+/* ============================
+   RECALCULO DE FILTROS SUBORDINADOS
+   ============================ */
+function updateSubordinatedFilters() {
+  // 1. Obtenemos las filas filtradas ÚNICAMENTE por el checklist de Abastecimiento
+  let rowsForSub = data;
+  const abastVals = getCheckedComprasAbastecimiento();
+  if (abastVals.length < 2) {
+    if (abastVals.includes("SI")) {
+      rowsForSub = rowsForSub.filter(r => toNumber(r[COMPRAS_NICO_COL]) === 1);
+    } else if (abastVals.includes("NO")) {
+      rowsForSub = rowsForSub.filter(r => !r[COMPRAS_NICO_COL] || toNumber(r[COMPRAS_NICO_COL]) !== 1);
+    } else {
+      rowsForSub = [];
+    }
+  }
+
+  // 2. Extraemos los valores únicos de esa porción de datos
+  const activeBuyers = uniqSorted(rowsForSub.map(r => r[COMPRADOR_COL]));
+  const activeOcs = uniqSorted(rowsForSub.map(r => r[GC_OC_COL]));
+
+  // 3. Volvemos a llenar los select manteniendo la selección previa si existía
+  fillSelect("compradorSelect", activeBuyers, "Todos");
+  fillSelect("gcocSelect", activeOcs, "Todos");
+}
+
+
+
 function applyAll() {
+  // RECALCULO DE SUBORDINADOS ANTES DE FILTRAR LA BASE GENERAL
+  updateSubordinatedFilters();
+
   const rows = filteredRowsNoMes();
 
   const months = buildMesSelect(rows);
@@ -1300,7 +1331,6 @@ function applyAll() {
   buildChartMes(rows);
   buildChartTendencia(rows);
 }
-
 /* ============================
    INITIALIZATION
    ============================ */
