@@ -32,34 +32,33 @@
     <div class="loading-text">Cargando reporte de cumplimiento compras...</div>
   </div>
 
-  <header class="topbar">
-    <div class="topbar-right" style="display: flex; gap: 0.5rem; align-items: stretch;">
-      <!-- BOTÓN AGREGADO PARA LA EXPLICACIÓN -->
-      <button class="btn" onclick="document.getElementById('modalExplicacion').style.display = 'flex'" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0 12px; font-size: 0.85rem; font-weight: 600; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Ver Explicación del Criterio">
-        💡 Explicación
-      </button>
-
-      <button class="btn-refresh-top" onclick="window.forceRefreshData()" title="Actualizar datos e invalidar cache">
-        ...
+<header class="topbar">
     <div class="topbar-left">
       <div class="title">COMPRAS</div>
       <div class="subtitle">Análisis de Cumplimiento de Pedidos</div>
     </div>
 
-    <div class="topbar-right" style="display: flex; gap: 0.5rem; align-items: stretch;">
-      <button class="btn-refresh-top" onclick="window.forceRefreshData()" title="Actualizar datos e invalidar cache">
-        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="23 4 23 10 17 10"></polyline>
-          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-        </svg>
-      </button>
-      <div class="update-box">
-        <div class="update-label">Última actualización</div>
-        <div id="lastUpdate" class="update-date">29/06/2026</div>  
+    <div class="topbar-right" style="display: flex; gap: 1.5rem; align-items: center;">
+      <!-- CUADRO ACTUALIZACIÓN Y REFRESCO -->
+      <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+        <button class="btn-refresh-top" onclick="window.forceRefreshData()" title="Actualizar datos e invalidar cache">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
+        <div class="update-box">
+          <div class="update-label">Última actualización</div>
+          <div id="lastUpdate" class="update-date">29/06/2026</div>  
+        </div>
       </div>
+
+      <!-- BOTÓN EXPLICACIÓN ESTILO PESTAÑA AZURE -->
+      <button onclick="document.getElementById('modalExplicacion').style.display = 'flex'" style="background: none; border: none; color: rgba(255, 255, 255, 0.8); font-family: 'Montserrat', sans-serif; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; padding: 10px 4px; display: flex; align-items: center; gap: 6px; transition: color 0.2s; border-bottom: 3px solid transparent;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='rgba(255, 255, 255, 0.8)'">
+        💡 Explicación
+      </button>
     </div>
   </header>
-
 
 
   <main class="container">
