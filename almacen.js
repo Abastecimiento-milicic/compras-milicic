@@ -381,6 +381,9 @@ function updateKPIsMonthly(rows, months) {
 /* ============================
    CHARTS (ECHARTS ALMACÉN COMPLETO Y AJUSTADO)
    ============================ */
+/* ============================
+   CHART 1: GRÁFICO DE CUMPLIMIENTO ALMACÉN (AJUSTADO)
+   ============================ */
 function buildChartMes(rows) {
   const agg = new Map();
   const monthsSet = new Set();
@@ -434,8 +437,8 @@ function buildChartMes(rows) {
   const labelMonths = months.map(formatMonthKey);
 
   const option = {
-    // Aumentamos el margen superior (top: 55) para que no se corten las etiquetas rojas superiores
-    grid: { left: 55, right: 65, top: 55, bottom: 65 },
+    // 🚀 Damos 75px arriba y 80px abajo para que entren holgados todos los carteles
+    grid: { left: 55, right: 65, top: 75, bottom: 80 },
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "shadow" },
@@ -465,7 +468,7 @@ function buildChartMes(rows) {
       left: "center",
       itemWidth: 14,
       itemHeight: 10,
-      textStyle: { fontWeight: 700, fontSize: 12 },
+      textStyle: { fontWeight: 700, fontSize: 11 },
       data: ["Entregados AT", "Entregados FT", "No entregados", "%AT Acumulado", "Promedio días de demora"]
     },
     xAxis: {
@@ -485,7 +488,7 @@ function buildChartMes(rows) {
       {
         type: "value",
         name: "Días de demora",
-        nameTextStyle: { fontWeight: 700, fontSize: 11, color: "#64748b" },
+        nameTextStyle: { fontWeight: 700, fontSize: 11, color: "#64748b", padding: [0, 0, 10, 0] },
         position: "right",
         min: 0,
         max: 25,
@@ -514,10 +517,10 @@ function buildChartMes(rows) {
                 borderColor: "#ef4444",
                 borderWidth: 1.5,
                 borderRadius: 4,
-                padding: [3, 5],
+                padding: [2, 4],
                 color: "#b91c1c",
                 fontWeight: 900,
-                fontSize: 10,
+                fontSize: 9,
                 formatter: () => `⚠️ ${fmtInt(q)}\n(${pct}%)`
               }
             };
@@ -528,7 +531,7 @@ function buildChartMes(rows) {
                 show: true,
                 position: "inside",
                 fontWeight: 900,
-                fontSize: 10,
+                fontSize: 9,
                 color: "#ffffff",
                 formatter: () => `${fmtInt(q)}\n(${pct}%)`
               }
@@ -552,7 +555,7 @@ function buildChartMes(rows) {
               show: true,
               position: "inside",
               fontWeight: 900,
-              fontSize: 10,
+              fontSize: 9,
               color: "#0f172a",
               formatter: () => pct > 4 ? `${fmtInt(q)}\n(${pct}%)` : ""
             }
@@ -577,9 +580,9 @@ function buildChartMes(rows) {
               backgroundColor: "#ef4444",
               color: "#ffffff",
               borderRadius: 4,
-              padding: [3, 5],
+              padding: [2, 4],
               fontWeight: 900,
-              fontSize: 10,
+              fontSize: 9,
               formatter: () => `${fmtInt(q)} (${pct}%)`
             }
           };
@@ -592,19 +595,21 @@ function buildChartMes(rows) {
         type: "line",
         data: pAT_acum.map(v => +(v).toFixed(2)),
         symbol: "square",
-        symbolSize: 7,
-        lineStyle: { width: 3, color: COLORS.purple },
+        symbolSize: 6,
+        lineStyle: { width: 2.5, color: COLORS.purple },
         itemStyle: { color: COLORS.purple, borderColor: "#fff", borderWidth: 1.5 },
         label: {
           show: true,
-          position: "top",
+          // 🚀 SE MUEVE ABAJO PARA QUE NO TAPE EL PORCENTAJE AMARILLO
+          position: "bottom",
+          distance: 6,
           backgroundColor: "#ffffff",
           borderColor: COLORS.purple,
           borderWidth: 1.5,
           borderRadius: 4,
-          padding: [3, 5],
+          padding: [2, 4],
           fontWeight: 900,
-          fontSize: 10,
+          fontSize: 9,
           color: "#6b21a8",
           formatter: (p) => _fmtPct(p.value)
         },
@@ -619,10 +624,10 @@ function buildChartMes(rows) {
                 show: true,
                 position: "end",
                 fontWeight: 900,
-                fontSize: 11,
+                fontSize: 10,
                 backgroundColor: "#1e293b",
                 borderRadius: 4,
-                padding: [4, 6],
+                padding: [3, 5],
                 color: "#ffffff",
                 formatter: `Obj ${TARGET_OBJ}%`
               }
@@ -636,19 +641,20 @@ function buildChartMes(rows) {
         yAxisIndex: 1,
         data: avgDem,
         symbol: "circle",
-        symbolSize: 8,
-        lineStyle: { width: 3, color: COLORS.blue },
+        symbolSize: 7,
+        lineStyle: { width: 2.5, color: COLORS.blue },
         itemStyle: { color: COLORS.blue, borderColor: "#fff", borderWidth: 2 },
         label: {
           show: true,
           position: "bottom",
+          distance: 8,
           backgroundColor: "#ffffff",
           borderColor: COLORS.blue,
           borderWidth: 1.5,
-          padding: [3, 6],
+          padding: [2, 5],
           borderRadius: 4,
           fontWeight: 900,
-          fontSize: 10,
+          fontSize: 9,
           color: COLORS.blue,
           formatter: (p) => (p.value == null || isNaN(p.value)) ? "" : `${Math.round(p.value)} d`
         },
@@ -663,7 +669,7 @@ function buildChartMes(rows) {
                 show: true,
                 position: "end",
                 fontWeight: 900,
-                fontSize: 11,
+                fontSize: 10,
                 backgroundColor: "#334155",
                 borderRadius: 3,
                 padding: [3, 5],
@@ -679,7 +685,6 @@ function buildChartMes(rows) {
 
   chartMes.setOption(option, true);
 }
-
 /* ============================
    CHART 2: TENDENCIA HISTÓRICA
    ============================ */
