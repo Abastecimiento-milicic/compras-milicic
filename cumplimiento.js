@@ -1335,40 +1335,23 @@ function applyAll() {
    ============================ */
 window.addEventListener("DOMContentLoaded", () => {
   async function loadData() {
-    console.log("Cargando reporte de cumplimiento compras con cache IndexedDB...");
+    console.log("[cumplimiento] Cargando datos con caché IndexedDB...");
     const gzUrl = csvUrl + ".gz?v=" + CACHE_BUSTER;
     const rawUrl = csvUrl + "?v=" + CACHE_BUSTER;
 
-    try {
-      if (typeof window.fetchWithCache === "function") {
-        try {
-          return await window.fetchWithCache(gzUrl);
-        } catch (err) {
-          console.warn("Could not load compressed Gzip file, falling back to raw CSV.", err);
-          return await window.fetchWithCache(rawUrl);
-        }
-      } else {
-        // Fallback without caching utility
-        try {
-          const response = await fetch(gzUrl);
-          if (!response.ok) throw new Error("Gzip file fetch failed");
-          const buf = await response.arrayBuffer();
-          if (typeof fflate !== 'undefined') {
-            const decompressed = fflate.gunzipSync(new Uint8Array(buf));
-            return fflate.strFromU8(decompressed);
-          } else {
-            throw new Error("fflate library not loaded");
-          }
-        } catch (err) {
-          console.warn("Gzip fetch/decompression failed, falling back to raw CSV fetch.", err);
-          const response = await fetch(rawUrl);
-          if (!response.ok) throw new Error(`No pude abrir el reporte ${csvUrl}`);
-          return response.text();
-        }
+    // Si la utilidad de caché está disponible, va directo a IndexedDB/memoria
+    if (typeof window.fetchWithCache === "function") {
+      try {
+        return await window.fetchWithCache(gzUrl);
+      } catch (err) {
+        return await window.fetchWithCache(rawUrl);
       }
-    } catch (e) {
-      throw new Error(`Error al cargar datos: ${e.message}`);
     }
+
+    // Fallback limpio a red si no hay cache-utils
+    const response = await fetch(rawUrl);
+    if (!response.ok) throw new Error(`No se pudo abrir ${csvUrl}`);
+    return response.text();
   }
 
   loadData()
