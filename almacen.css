@@ -1,9 +1,9 @@
-/* ===== Cumplimiento de Almacén Stylesheet (Tema Teal/Petróleo) ===== */
+/* ===== Cumplimiento de Almacén Stylesheet (Tema Naranja) ===== */
 
 .page-almacen {
-  --col-brand: #0D9488;
-  --col-brand-dk: #0F766E;
-  --col-brand-gradient: linear-gradient(135deg, #0F766E 0%, #0D9488 50%, #0284C7 100%);
+  --col-brand: #F26716;
+  --col-brand-dk: #C94F0C;
+  --col-brand-gradient: linear-gradient(135deg, #C94F0C 0%, #F26716 50%, #3767A6 100%);
 }
 
 .page-almacen .filters.filters-5 {
@@ -12,8 +12,20 @@
   gap: 0.75rem 1rem;
 }
 
-.page-almacen .kpi.kpi-teal {
-  border-left: 4px solid #0D9488;
+@media (max-width: 900px) {
+  .page-almacen .filters.filters-5 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .page-almacen .filters.filters-5 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.page-almacen .kpi.kpi-orange {
+  border-left: 4px solid #F26716;
 }
 
 .page-almacen .panel-title {
