@@ -56,17 +56,11 @@
     </div>
   </header>
 
-
-
   <!-- BARRA DE PESTAÑAS / NAVEGACIÓN -->
   <nav class="tabs-bar">
     <a href="index.html" class="tab-item">COMPRAS</a>
     <a href="almacen.html" class="tab-item active">ALMACÉN</a>
   </nav>
-
-  <main class="container">
-
-    
 
   <main class="container">
     <div id="msg"></div>
@@ -119,21 +113,19 @@
             <select id="mesSelect" multiple size="4" class="multi-select"></select>
           </div>
 
-          <!-- 6. Botones Descarga -->
-          <div class="filter download-slot" style="display: flex; flex-direction: column; gap: 6px; justify-content: flex-end; grid-column: span 5;">
-            <div style="display: flex; gap: 8px;">
-              <button id="btnDownloadBase" class="btn" style="flex: 1; height: 36px; padding: 0; font-size: 0.8rem; background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%); color: white; border: none;">
-                ⬇ Descargar Base Completa
-              </button>
-              <button id="btnDownloadNO" class="btn" style="flex: 1; height: 36px; padding: 0; font-size: 0.8rem;">
-                ⬇ Descargar NO entregados
-              </button>
-              <button id="btnDownloadFT" class="btn" style="flex: 1; height: 36px; padding: 0; font-size: 0.8rem;">
-                ⬇ Descargar FUERA de término
-              </button>
-            </div>
-          </div>
+        </div>
 
+        <!-- Botones de descarga alineados abajo -->
+        <div style="display: flex; gap: 10px; margin-top: 1rem; border-top: 1px solid #e2e8f0; padding-top: 0.75rem;">
+          <button id="btnDownloadBase" class="btn" style="flex: 1; height: 36px; padding: 0; font-size: 0.8rem; background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%); color: white; border: none;">
+            ⬇ Descargar Base Completa
+          </button>
+          <button id="btnDownloadNO" class="btn" style="flex: 1; height: 36px; padding: 0; font-size: 0.8rem;">
+            ⬇ Descargar NO entregados
+          </button>
+          <button id="btnDownloadFT" class="btn" style="flex: 1; height: 36px; padding: 0; font-size: 0.8rem;">
+            ⬇ Descargar FUERA de término
+          </button>
         </div>
       </div>
     </section>
@@ -144,7 +136,7 @@
         <button class="help-btn" onclick="openHelp('kpis-acumulado')" title="Ayuda sobre KPIs acumulados">ℹ</button>
       </div>
 
-      <div class="panel-body kpi-grid kpi-grid-7">
+      <div class="panel-body kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
         <div class="kpi kpi-teal">
           <div class="kpi-title">COMPROMETIDOS</div>
           <div id="kpiTotal" class="kpi-value">-</div>
@@ -158,27 +150,15 @@
         </div>
 
         <div class="kpi kpi-amber">
-          <div class="kpi-title">CUMPLIDO FT CRÍTICO</div>
-          <div id="kpiFTCritPct" class="kpi-value">-</div>
-          <div id="kpiFTCritQty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
-        </div>
-
-        <div class="kpi kpi-yellow">
-          <div class="kpi-title">CUMPLIDO FT NO CRÍTICO</div>
-          <div id="kpiFTNoCritPct" class="kpi-value">-</div>
-          <div id="kpiFTNoCritQty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
-        </div>
-
-        <div class="kpi kpi-coral">
-          <div class="kpi-title">NO CUMPLIDO NO CRÍTICO</div>
-          <div id="kpiNONoCritPct" class="kpi-value">-</div>
-          <div id="kpiNONoCritQty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
+          <div class="kpi-title">CUMPLIDO FT</div>
+          <div id="kpiFTPct" class="kpi-value">-</div>
+          <div id="kpiFTQty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
         </div>
 
         <div class="kpi kpi-red">
-          <div class="kpi-title">NO CUMPLIDO CRÍTICO</div>
-          <div id="kpiNOCritPct" class="kpi-value">-</div>
-          <div id="kpiNOCritQty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
+          <div class="kpi-title">NO CUMPLIDO ALMACEN</div>
+          <div id="kpiNOPct" class="kpi-value">-</div>
+          <div id="kpiNOQty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
         </div>
 
         <div class="kpi kpi-slate">
@@ -195,7 +175,7 @@
         <button class="help-btn" onclick="openHelp('kpis-mes')" title="Ayuda sobre KPIs del mes">ℹ</button>
       </div>
 
-      <div class="panel-body kpi-grid kpi-grid-7">
+      <div class="panel-body kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
         <div class="kpi kpi-teal">
           <div class="kpi-title">COMPROMETIDOS (MES)</div>
           <div id="kpiTotalMes" class="kpi-value">-</div>
@@ -205,31 +185,19 @@
         <div class="kpi kpi-green">
           <div class="kpi-title">% CUMPLIDO AT (MES)</div>
           <div id="kpiATmes" class="kpi-value">-</div>
-          <div id="kpiATmesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
+          <div class="kpi-sub kpi-sub-strong">Despachado a tiempo</div>
         </div>
 
         <div class="kpi kpi-amber">
-          <div class="kpi-title">% CUMPLIDO FT CRÍTICO (MES)</div>
-          <div id="kpiFTCritMes" class="kpi-value">-</div>
-          <div id="kpiFTCritMesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
-        </div>
-
-        <div class="kpi kpi-yellow">
-          <div class="kpi-title">% CUMPLIDO FT NO CRÍTICO (MES)</div>
-          <div id="kpiFTNoCritMes" class="kpi-value">-</div>
-          <div id="kpiFTNoCritMesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
-        </div>
-
-        <div class="kpi kpi-coral">
-          <div class="kpi-title">% NO CUMPLIDO NO CRÍTICO (MES)</div>
-          <div id="kpiNONoCritMes" class="kpi-value">-</div>
-          <div id="kpiNONoCritMesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
+          <div class="kpi-title">% CUMPLIDO FT (MES)</div>
+          <div id="kpiFTmes" class="kpi-value">-</div>
+          <div class="kpi-sub kpi-sub-strong">Despachado fuera de término</div>
         </div>
 
         <div class="kpi kpi-red">
-          <div class="kpi-title">% NO CUMPLIDO CRÍTICO (MES)</div>
-          <div id="kpiNOCritMes" class="kpi-value">-</div>
-          <div id="kpiNOCritMesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
+          <div class="kpi-title">% NO CUMPLIDO (MES)</div>
+          <div id="kpiNOmes" class="kpi-value">-</div>
+          <div class="kpi-sub kpi-sub-strong">Pendiente / No entregado</div>
         </div>
 
         <div class="kpi kpi-slate">
@@ -272,13 +240,31 @@
     LOGÍSTICA — Evaluación de Cumplimiento de Almacén.
   </footer>
 
+  <!-- MODAL EXPLICACION -->
+  <div id="modalExplicacion" class="modal-overlay" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div class="modal-content" style="background-color: #fff; padding: 25px; border-radius: 8px; max-width: 650px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); font-family: 'Source Sans 3', sans-serif; position: relative; max-height: 85vh; overflow-y: auto;">
+      <span onclick="document.getElementById('modalExplicacion').style.display = 'none'" style="position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer; color: #64748b; font-weight: bold;">&times;</span>
+      
+      <h3 style="font-family: 'Montserrat', sans-serif; margin-top: 0; color: #0F766E; border-bottom: 2px solid #0D9488; padding-bottom: 8px;">ℹ️ Explicación del Reporte de Almacén</h3>
+      
+      <div style="font-size: 0.95rem; line-height: 1.6; color: #0f172a; text-align: justify;">
+        <p>En este reporte se mide el cumplimiento operativo de <strong>ALMACÉN / PAÑOL</strong> en la preparación y entrega de pedidos.</p>
+        <p>Se evalúan las cantidades solicitadas contra las entregadas/despachadas en fecha esperada.</p>
+      </div>
+      
+      <div style="margin-top: 20px; text-align: right;">
+        <button onclick="document.getElementById('modalExplicacion').style.display = 'none'" class="btn" style="padding: 6px 16px; background: #64748b; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     function openHelp(section) {
       const messages = {
-        'filtros-almacen': 'Filtros de Evaluación:\nPermiten filtrar las solicitudes del almacén por Cliente, Clasificación, Clase de Doc y Almacén (Rosario vs San Juan).',
+        'filtros-almacen': 'Filtros de Evaluación:\nPermiten filtrar por Cliente, Clasificación, Clase de Doc y Almacén (Rosario vs San Juan).',
         'kpis-acumulado': 'Cumplimiento Acumulado:\nMuestra el desempeño del almacén en los últimos 12 meses evaluados.',
-        'kpis-mes': 'Cumplimiento - Mes Seleccionado:\nMuestra las métricas específicas y deltas respecto al mes anterior.',
-        'grafico-mes': 'Gráfico de Cumplimiento Resumen:\nEvolución mensual del cumplimiento de despacho/salida de pañol.',
+        'kpis-mes': 'Cumplimiento - Mes Seleccionado:\nMuestra las métricas específicas del mes seleccionado.',
+        'grafico-mes': 'Gráfico de Cumplimiento Resumen:\nEvolución mensual del cumplimiento de despacho.',
         'grafico-tendencia': 'Tendencia Histórica:\nLíneas de tendencia de las categorías del almacén.'
       };
       alert(messages[section] || 'Ayuda no disponible para esta sección.');
