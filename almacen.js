@@ -509,9 +509,30 @@ function applyAll() {
   buildChartMes(rows);
 }
 
+/* ============================
+   INIT Y CARGA RÁPIDA CON CACHÉ
+   ============================ */
 window.addEventListener("DOMContentLoaded", () => {
-  fetch(csvUrl + "?v=" + CACHE_BUSTER)
-    .then(r => r.text())
+  async function loadData() {
+    console.log("[almacen] Cargando datos con caché IndexedDB...");
+    const gzUrl = csvUrl + ".gz?v=" + CACHE_BUSTER;
+    const rawUrl = csvUrl + "?v=" + CACHE_BUSTER;
+
+    // Si cache-utils.js está cargado, usa la memoria local instantánea
+    if (typeof window.fetchWithCache === "function") {
+      try {
+        return await window.fetchWithCache(gzUrl);
+      } catch (err) {
+        return await window.fetchWithCache(rawUrl);
+      }
+    } else {
+      const response = await fetch(rawUrl);
+      if (!response.ok) throw new Error(`No se pudo abrir ${csvUrl}`);
+      return response.text();
+    }
+  }
+
+  loadData()
     .then(text => {
       const results = Papa.parse(text, { delimiter: DELIM, header: true, skipEmptyLines: true });
       data = results.data;
@@ -541,5 +562,12 @@ window.addEventListener("DOMContentLoaded", () => {
         downloadCSV("BASE_COMPLETA_ALMACEN.csv", filteredRowsByAll(), headers);
       });
     })
-    .catch(err => showError("Error cargando datos de Almacén: " + err.message));
+    .catch(err => {
+      console.error(err);
+      showError("Error cargando datos de Almacén: " + (err?.message || err));
+    })
+    .finally(() => {
+      const loader = document.getElementById("loader");
+      if (loader && !loader.classList.contains("hidden")) loader.classList.add("hidden");
+    });
 });
