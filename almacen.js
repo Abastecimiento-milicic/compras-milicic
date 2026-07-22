@@ -384,6 +384,9 @@ function updateKPIsMonthly(rows, months) {
 /* ============================
    CHART 1: GRÁFICO DE CUMPLIMIENTO ALMACÉN (AJUSTADO)
    ============================ */
+/* ============================
+   CHART 1: GRÁFICO DE CUMPLIMIENTO ALMACÉN (PERFECCIONADO)
+   ============================ */
 function buildChartMes(rows) {
   const agg = new Map();
   const monthsSet = new Set();
@@ -437,8 +440,8 @@ function buildChartMes(rows) {
   const labelMonths = months.map(formatMonthKey);
 
   const option = {
-    // 🚀 Damos 75px arriba y 80px abajo para que entren holgados todos los carteles
-    grid: { left: 55, right: 65, top: 75, bottom: 80 },
+    // 🚀 Aumentamos el top a 85px para dar espacio a los carteles superiores
+    grid: { left: 55, right: 65, top: 85, bottom: 70 },
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "shadow" },
@@ -488,7 +491,7 @@ function buildChartMes(rows) {
       {
         type: "value",
         name: "Días de demora",
-        nameTextStyle: { fontWeight: 700, fontSize: 11, color: "#64748b", padding: [0, 0, 10, 0] },
+        nameTextStyle: { fontWeight: 700, fontSize: 11, color: "#64748b", padding: [0, 0, 15, 0] },
         position: "right",
         min: 0,
         max: 25,
@@ -600,9 +603,9 @@ function buildChartMes(rows) {
         itemStyle: { color: COLORS.purple, borderColor: "#fff", borderWidth: 1.5 },
         label: {
           show: true,
-          // 🚀 SE MUEVE ABAJO PARA QUE NO TAPE EL PORCENTAJE AMARILLO
+          // 🚀 SE MUEVE ABAJO Y CON MAYOR DISTANCIA PARA NO TAPAR LAS BARRAS
           position: "bottom",
-          distance: 6,
+          distance: 12,
           backgroundColor: "#ffffff",
           borderColor: COLORS.purple,
           borderWidth: 1.5,
