@@ -247,24 +247,41 @@
     LOGÍSTICA — Evaluación de Cumplimiento de Almacén.
   </footer>
 
-  <!-- MODAL EXPLICACION -->
-  <div id="modalExplicacion" class="modal-overlay" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
-    <div class="modal-content" style="background-color: #fff; padding: 25px; border-radius: 8px; max-width: 650px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); font-family: 'Source Sans 3', sans-serif; position: relative; max-height: 85vh; overflow-y: auto;">
-      <span onclick="document.getElementById('modalExplicacion').style.display = 'none'" style="position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer; color: #64748b; font-weight: bold;">&times;</span>
+ <!-- MODAL EXPLICACION ALMACÉN -->
+<div id="modalExplicacion" class="modal-overlay" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+  <div class="modal-content" style="background-color: #fff; padding: 25px; border-radius: 8px; max-width: 680px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); font-family: 'Source Sans 3', sans-serif; position: relative; max-height: 85vh; overflow-y: auto;">
+    <span onclick="document.getElementById('modalExplicacion').style.display = 'none'" style="position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer; color: #64748b; font-weight: bold;">&times;</span>
+    
+    <h3 style="font-family: 'Montserrat', sans-serif; margin-top: 0; color: #C94F0C; border-bottom: 2px solid #F26716; padding-bottom: 8px;">ℹ️ Explicación del Reporte de Almacén</h3>
+    
+    <div style="font-size: 0.95rem; line-height: 1.6; color: #0f172a; text-align: justify;">
+      <p>Este reporte mide el cumplimiento operativo de <strong>ALMACÉN</strong> en el procesamiento y entrega de pedidos.</p>
       
-     <h3 style="font-family: 'Montserrat', sans-serif; margin-top: 0; color: #C94F0C; border-bottom: 2px solid #F26716; padding-bottom: 8px;">ℹ️ Explicación del Reporte de Almacén</h3>
-      
-      <div style="font-size: 0.95rem; line-height: 1.6; color: #0f172a; text-align: justify;">
-        <p>En este reporte se mide el cumplimiento operativo de <strong>ALMACÉN / PAÑOL</strong> en la preparación y entrega de pedidos.</p>
-        <p>Se evalúan las cantidades solicitadas contra las entregadas/despachadas en fecha esperada.</p>
-      </div>
-      
-      <div style="margin-top: 20px; text-align: right;">
-        <button onclick="document.getElementById('modalExplicacion').style.display = 'none'" class="btn" style="padding: 6px 16px; background: #64748b; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Cerrar</button>
-      </div>
+      <ul style="margin-left: 20px; padding-left: 0;">
+        <li style="margin-bottom: 8px;">
+          <strong>ZPAS y ZPOE:</strong> Se consideran <strong>CUMPLIDOS</strong> cuando el estado es <em>CUMPLIDO, CONSUMIDO o ALMACENADO</em>. La evaluación compara la <strong>Fecha de Entrega Esperada</strong> con la <strong>Fecha Sello de Recepción</strong> (llegada al almacén), no con la fecha de almacenamiento.
+        </li>
+        <li style="margin-bottom: 8px;">
+          <strong>ZPAN y ZPAI:</strong> Se consideran <strong>CUMPLIDOS</strong> cuando el estado es <em>DESPACHADO, CUMPLIDO, CONSUMIDO, CONSUMIDO PARCIAL o ALMACENADO</em>.
+        </li>
+      </ul>
+
+      <p style="background-color: #f8fafc; padding: 10px; border-left: 4px solid #F26716; border-radius: 4px; margin: 12px 0;">
+        ℹ️ <strong>Condición de Evaluación:</strong> Si el material llegó al almacén en término (antes o el mismo día de la Fecha de Entrega Esperada), el almacén <strong>no se evalúa</strong>, aunque el despacho haya demorado más de los días estándar.
+      </p>
+
+      <p style="margin-bottom: 6px;">Si no llegó en término, se evalúa el tiempo de almacén comparando la <strong>Fecha Cont. VL</strong> con la <strong>Fecha Sello de Recepción</strong>:</p>
+      <ul style="margin-left: 20px; padding-left: 0;">
+        <li><strong>Plazo estándar:</strong> 6 días.</li>
+        <li><strong>Con prioridad / urgencia:</strong> 4 días.</li>
+      </ul>
+    </div>
+    
+    <div style="margin-top: 20px; text-align: right;">
+      <button onclick="document.getElementById('modalExplicacion').style.display = 'none'" class="btn" style="padding: 6px 16px; background: #64748b; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Cerrar</button>
     </div>
   </div>
-
+</div>
   <script>
     function openHelp(section) {
       const messages = {
