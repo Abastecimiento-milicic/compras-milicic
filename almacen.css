@@ -1,0 +1,25 @@
+/* ===== Cumplimiento de Almacén Stylesheet (Tema Teal/Petróleo) ===== */
+
+.page-almacen {
+  --col-brand: #0D9488;
+  --col-brand-dk: #0F766E;
+  --col-brand-gradient: linear-gradient(135deg, #0F766E 0%, #0D9488 50%, #0284C7 100%);
+}
+
+.page-almacen .filters.filters-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem 1rem;
+}
+
+.page-almacen .kpi.kpi-teal {
+  border-left: 4px solid #0D9488;
+}
+
+.page-almacen .panel-title {
+  background: var(--col-brand);
+}
+
+.page-almacen .filter label {
+  background-color: var(--col-brand);
+}
