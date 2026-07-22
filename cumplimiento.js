@@ -7,7 +7,7 @@ if (!cb) {
   sessionStorage.setItem("mi_cache_buster", cb);
 }
 
-const CACHE_BUSTER = window.MI_CACHE_VERSION || sessionStorage.getItem("mi_cache_buster") || new Date().getTime();
+const CACHE_BUSTER = window.MI_CACHE_VERSION;
 
 window.forceRefreshData = function() {
   console.log("[cumplimiento] Wiping cache and refreshing...");
