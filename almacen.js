@@ -1,12 +1,7 @@
 /* ===== Cumplimiento de Almacén JS Logic ===== */
 
-let cb = sessionStorage.getItem("mi_cache_buster");
-if (!cb) {
-  cb = new Date().getTime();
-  sessionStorage.setItem("mi_cache_buster", cb);
-}
-// Toma la versión global definida en last-update.js (o genera una por sesión de fallback)
-const CACHE_BUSTER = window.MI_CACHE_VERSION || sessionStorage.getItem("mi_cache_buster") || new Date().getTime();
+// Cache Buster unificado
+const CACHE_BUSTER = window.MI_CACHE_VERSION;
 
 window.forceRefreshData = function() {
   console.log("[almacen] Wiping cache and refreshing...");
@@ -233,19 +228,15 @@ function getSingleMes(months) {
 function filteredRowsNoMes() {
   let rows = data;
 
-  // 1. Cliente
   const clients = getSelValues("clienteSelect");
   if (clients.length) rows = rows.filter(r => clients.includes(clean(r[CLIENTE_COL])));
 
-  // 2. Clasificación
   const clasifs = getSelValues("clasificacionSelect");
   if (clasifs.length) rows = rows.filter(r => clasifs.includes(clean(r[CLASIFICACION_COL])));
 
-  // 3. Clase de Doc
   const clases = getSelValues("claseDocSelect");
   if (clases.length) rows = rows.filter(r => clases.includes(clean(r[CLASE_DOC_COL])));
 
-  // 4. Almacén (Lógica BASE ROS: 1 => ROSARIO, otro => SAN JUAN)
   const almacenes = getSelValues("almacenSelect");
   if (almacenes.length) {
     rows = rows.filter(r => {
@@ -388,7 +379,7 @@ function updateKPIsMonthly(rows, months) {
 }
 
 /* ============================
-   CHARTS (ECHARTS ALMACÉN COMPLETO)
+   CHARTS (ECHARTS ALMACÉN COMPLETO Y AJUSTADO)
    ============================ */
 function buildChartMes(rows) {
   const agg = new Map();
@@ -431,7 +422,6 @@ function buildChartMes(rows) {
     pAT_acum.push(cumTotal ? (cumAT / cumTotal) * 100 : 0);
   }
 
-  // Días de demora promedio
   const avgDem = months.map(m => {
     const c = agg.get(m);
     return (c && c.demCnt) ? (c.demSum / c.demCnt) : null;
@@ -444,7 +434,8 @@ function buildChartMes(rows) {
   const labelMonths = months.map(formatMonthKey);
 
   const option = {
-    grid: { left: 50, right: 65, top: 40, bottom: 80 },
+    // Aumentamos el margen superior (top: 55) para que no se corten las etiquetas rojas superiores
+    grid: { left: 55, right: 65, top: 55, bottom: 65 },
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "shadow" },
@@ -470,17 +461,17 @@ function buildChartMes(rows) {
       }
     },
     legend: {
-      bottom: 5,
+      bottom: 0,
       left: "center",
       itemWidth: 14,
       itemHeight: 10,
-      textStyle: { fontWeight: 700, fontSize: 11 },
+      textStyle: { fontWeight: 700, fontSize: 12 },
       data: ["Entregados AT", "Entregados FT", "No entregados", "%AT Acumulado", "Promedio días de demora"]
     },
     xAxis: {
       type: "category",
       data: labelMonths,
-      axisLabel: { fontWeight: 700, fontSize: 10 }
+      axisLabel: { fontWeight: 800, fontSize: 11, color: "#334155" }
     },
     yAxis: [
       {
@@ -488,18 +479,18 @@ function buildChartMes(rows) {
         min: 0,
         max: 100,
         interval: 20,
-        axisLabel: { formatter: "{value}%", fontWeight: 700 },
+        axisLabel: { formatter: "{value}%", fontWeight: 700, fontSize: 11 },
         splitLine: { lineStyle: { color: "rgba(15,23,42,0.06)" } }
       },
       {
         type: "value",
         name: "Días de demora",
-        nameTextStyle: { fontWeight: 700 },
+        nameTextStyle: { fontWeight: 700, fontSize: 11, color: "#64748b" },
         position: "right",
         min: 0,
         max: 25,
         interval: 5,
-        axisLabel: { fontWeight: 700 },
+        axisLabel: { fontWeight: 700, fontSize: 11 },
         splitLine: { show: false }
       }
     ],
@@ -526,7 +517,7 @@ function buildChartMes(rows) {
                 padding: [3, 5],
                 color: "#b91c1c",
                 fontWeight: 900,
-                fontSize: 9,
+                fontSize: 10,
                 formatter: () => `⚠️ ${fmtInt(q)}\n(${pct}%)`
               }
             };
@@ -537,7 +528,7 @@ function buildChartMes(rows) {
                 show: true,
                 position: "inside",
                 fontWeight: 900,
-                fontSize: 9,
+                fontSize: 10,
                 color: "#ffffff",
                 formatter: () => `${fmtInt(q)}\n(${pct}%)`
               }
@@ -561,9 +552,9 @@ function buildChartMes(rows) {
               show: true,
               position: "inside",
               fontWeight: 900,
-              fontSize: 9,
+              fontSize: 10,
               color: "#0f172a",
-              formatter: () => pct > 5 ? `${fmtInt(q)}\n(${pct}%)` : ""
+              formatter: () => pct > 4 ? `${fmtInt(q)}\n(${pct}%)` : ""
             }
           };
         }),
@@ -585,10 +576,10 @@ function buildChartMes(rows) {
               position: "top",
               backgroundColor: "#ef4444",
               color: "#ffffff",
-              borderRadius: 3,
-              padding: [2, 4],
+              borderRadius: 4,
+              padding: [3, 5],
               fontWeight: 900,
-              fontSize: 9,
+              fontSize: 10,
               formatter: () => `${fmtInt(q)} (${pct}%)`
             }
           };
@@ -601,7 +592,7 @@ function buildChartMes(rows) {
         type: "line",
         data: pAT_acum.map(v => +(v).toFixed(2)),
         symbol: "square",
-        symbolSize: 6,
+        symbolSize: 7,
         lineStyle: { width: 3, color: COLORS.purple },
         itemStyle: { color: COLORS.purple, borderColor: "#fff", borderWidth: 1.5 },
         label: {
@@ -609,18 +600,18 @@ function buildChartMes(rows) {
           position: "top",
           backgroundColor: "#ffffff",
           borderColor: COLORS.purple,
-          borderWidth: 1,
+          borderWidth: 1.5,
           borderRadius: 4,
-          padding: [2, 4],
+          padding: [3, 5],
           fontWeight: 900,
-          fontSize: 9,
-          color: COLORS.purple,
+          fontSize: 10,
+          color: "#6b21a8",
           formatter: (p) => _fmtPct(p.value)
         },
         markLine: {
           silent: true,
           symbol: ["none", "none"],
-          lineStyle: { type: "dashed", width: 2, color: "#334155" },
+          lineStyle: { type: "dashed", width: 2, color: "#1e293b" },
           data: [
             {
               yAxis: TARGET_OBJ,
@@ -645,16 +636,16 @@ function buildChartMes(rows) {
         yAxisIndex: 1,
         data: avgDem,
         symbol: "circle",
-        symbolSize: 7,
-        lineStyle: { width: 2.5, color: COLORS.blue },
+        symbolSize: 8,
+        lineStyle: { width: 3, color: COLORS.blue },
         itemStyle: { color: COLORS.blue, borderColor: "#fff", borderWidth: 2 },
         label: {
           show: true,
           position: "bottom",
           backgroundColor: "#ffffff",
           borderColor: COLORS.blue,
-          borderWidth: 1,
-          padding: [2, 5],
+          borderWidth: 1.5,
+          padding: [3, 6],
           borderRadius: 4,
           fontWeight: 900,
           fontSize: 10,
@@ -672,7 +663,7 @@ function buildChartMes(rows) {
                 show: true,
                 position: "end",
                 fontWeight: 900,
-                fontSize: 10,
+                fontSize: 11,
                 backgroundColor: "#334155",
                 borderRadius: 3,
                 padding: [3, 5],
@@ -724,20 +715,20 @@ function buildChartTendencia(rows) {
   const labelMonths = months.map(formatMonthKey);
 
   const option = {
-    grid: { left: 50, right: 30, top: 40, bottom: 60 },
+    grid: { left: 50, right: 30, top: 40, bottom: 50 },
     tooltip: { trigger: "axis", confine: true },
     legend: {
-      bottom: 5,
+      bottom: 0,
       left: "center",
       textStyle: { fontWeight: 700, fontSize: 11 },
       data: ["A Tiempo %", "Fuera Tiempo %", "No Entregados %"]
     },
-    xAxis: { type: "category", data: labelMonths, axisLabel: { fontWeight: 700 } },
+    xAxis: { type: "category", data: labelMonths, axisLabel: { fontWeight: 800, fontSize: 11 } },
     yAxis: {
       type: "value",
       min: 0,
       max: 100,
-      axisLabel: { formatter: "{value}%", fontWeight: 700 },
+      axisLabel: { formatter: "{value}%", fontWeight: 700, fontSize: 11 },
       splitLine: { lineStyle: { color: "rgba(15,23,42,0.06)" } }
     },
     series: [
@@ -759,6 +750,7 @@ function buildChartTendencia(rows) {
                 padding: [2, 4],
                 color: "#b91c1c",
                 fontWeight: 900,
+                fontSize: 10,
                 formatter: (p) => `⚠️ ${_fmtNum1(p.value)}%`
               }
             };
@@ -769,6 +761,7 @@ function buildChartTendencia(rows) {
               show: true,
               position: "top",
               fontWeight: 900,
+              fontSize: 10,
               color: "#10b981",
               formatter: (p) => `${_fmtNum1(p.value)}%`
             }
@@ -787,6 +780,7 @@ function buildChartTendencia(rows) {
           show: true,
           position: "top",
           fontWeight: 800,
+          fontSize: 10,
           color: "#0f172a",
           formatter: (p) => `${_fmtNum1(p.value)}%`
         }
@@ -801,6 +795,7 @@ function buildChartTendencia(rows) {
           show: true,
           position: "top",
           fontWeight: 800,
+          fontSize: 10,
           color: "#b91c1c",
           formatter: (p) => `${_fmtNum1(p.value)}%`
         }
