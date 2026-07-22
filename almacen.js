@@ -320,59 +320,48 @@ function avgDelay(rows) {
   return c ? (s / c) : NaN;
 }
 
+/* ============================
+   KPI CALCULATIONS & UPDATES
+   ============================ */
 function calcTotals(rows) {
-  let at = 0, ft_crit = 0, ft_nocrit = 0, no_nocrit = 0, no_crit = 0;
+  let at = 0, ft = 0, no = 0;
   for (const r of rows) {
-    at += toNumber(r[AT_COL]);
-    ft_crit += toNumber(r[FT_CRIT_COL]);
-    ft_nocrit += toNumber(r[FT_NOCRIT_COL]);
-    no_nocrit += toNumber(r[NO_NOCRIT_COL]);
-    no_crit += toNumber(r[NO_CRIT_COL]);
+    at += toNumber(r["CUMPLIDO AT"]);
+    ft += toNumber(r["CUMPLIDO FT"]);
+    no += toNumber(r["NO CUMPLIDO ALMACEN"]);
   }
-  const total = at + ft_crit + ft_nocrit + no_nocrit + no_crit;
-  return { at, ft_crit, ft_nocrit, no_nocrit, no_crit, total };
+  const total = at + ft + no;
+  return { at, ft, no, total };
 }
 
 function calcMonthTotals(rows, month) {
-  let at = 0, ft_crit = 0, ft_nocrit = 0, no_nocrit = 0, no_crit = 0;
+  let at = 0, ft = 0, no = 0;
   for (const r of rows) {
-    if (clean(r[MONTH_COL]) !== month) continue;
-    at += toNumber(r[AT_COL]);
-    ft_crit += toNumber(r[FT_CRIT_COL]);
-    ft_nocrit += toNumber(r[FT_NOCRIT_COL]);
-    no_nocrit += toNumber(r[NO_NOCRIT_COL]);
-    no_crit += toNumber(r[NO_CRIT_COL]);
+    if (clean(r["Mes-Año"]) !== month) continue;
+    at += toNumber(r["CUMPLIDO AT"]);
+    ft += toNumber(r["CUMPLIDO FT"]);
+    no += toNumber(r["NO CUMPLIDO ALMACEN"]);
   }
-  const total = at + ft_crit + ft_nocrit + no_nocrit + no_crit;
+  const total = at + ft + no;
   return { 
-    at, ft_crit, ft_nocrit, no_nocrit, no_crit, total,
+    at, ft, no, total,
     pctAT: total ? at / total : NaN,
-    pctFTCrit: total ? ft_crit / total : NaN,
-    pctFTNoCrit: total ? ft_nocrit / total : NaN,
-    pctNONoCrit: total ? no_nocrit / total : NaN,
-    pctNOCrit: total ? no_crit / total : NaN 
+    pctFT: total ? ft / total : NaN,
+    pctNO: total ? no / total : NaN 
   };
 }
 
 function updateKPIsGeneral(rows) {
   const t = calcTotals(rows);
-  const pctAT = t.total ? t.at / t.total : NaN;
-
   setText("kpiTotal", fmtInt(t.total));
-  setText("kpiATpct", fmtPct01(pctAT));
+  setText("kpiATpct", fmtPct01(t.total ? t.at / t.total : NaN));
   setText("kpiATqty", `Cantidad: ${fmtInt(t.at)}`);
   
-  setText("kpiFTCritPct", fmtPct01(t.total ? t.ft_crit / t.total : NaN));
-  setText("kpiFTCritQty", `Cantidad: ${fmtInt(t.ft_crit)}`);
+  setText("kpiFTPct", fmtPct01(t.total ? t.ft / t.total : NaN));
+  setText("kpiFTQty", `Cantidad: ${fmtInt(t.ft)}`);
 
-  setText("kpiFTNoCritPct", fmtPct01(t.total ? t.ft_nocrit / t.total : NaN));
-  setText("kpiFTNoCritQty", `Cantidad: ${fmtInt(t.ft_nocrit)}`);
-
-  setText("kpiNONoCritPct", fmtPct01(t.total ? t.no_nocrit / t.total : NaN));
-  setText("kpiNONoCritQty", `Cantidad: ${fmtInt(t.no_nocrit)}`);
-
-  setText("kpiNOCritPct", fmtPct01(t.total ? t.no_crit / t.total : NaN));
-  setText("kpiNOCritQty", `Cantidad: ${fmtInt(t.no_crit)}`);
+  setText("kpiNOPct", fmtPct01(t.total ? t.no / t.total : NaN));
+  setText("kpiNOQty", `Cantidad: ${fmtInt(t.no)}`);
 
   const avgG = avgDelay(rows);
   setText("kpiDemoraAvg", isNaN(avgG) ? "-" : (Math.round(avgG) + " d"));
@@ -385,53 +374,56 @@ function updateKPIsMonthly(rows, months) {
   const cur = calcMonthTotals(rows, mes);
   setText("kpiTotalMes", fmtInt(cur.total));
   setText("kpiATmes", fmtPct01(cur.pctAT));
-  setText("kpiFTCritMes", fmtPct01(cur.pctFTCrit));
-  setText("kpiFTNoCritMes", fmtPct01(cur.pctFTNoCrit));
-  setText("kpiNONoCritMes", fmtPct01(cur.pctNONoCrit));
-  setText("kpiNOCritMes", fmtPct01(cur.pctNOCrit));
+  setText("kpiFTmes", fmtPct01(cur.pctFT));
+  setText("kpiNOmes", fmtPct01(cur.pctNO));
 
-  const mesRows = rows.filter(r => clean(r[MONTH_COL]) === mes);
+  const mesRows = rows.filter(r => clean(r["Mes-Año"]) === mes);
   const avgM = avgDelay(mesRows);
   setText("kpiDemoraMes", isNaN(avgM) ? "-" : (Math.round(avgM) + " d"));
 }
 
 /* ============================
-   CHARTS (ECHARTS)
+   CHARTS (ECHARTS ALMACÉN)
    ============================ */
 function buildChartMes(rows) {
   const agg = new Map();
   const monthsSet = new Set();
 
   for (const r of rows) {
-    const mk = clean(r[MONTH_COL]);
+    const mk = clean(r["Mes-Año"]);
     if (!mk) continue;
     monthsSet.add(mk);
 
     if (!agg.has(mk)) {
-      agg.set(mk, { at: 0, ft_crit: 0, ft_nocrit: 0, no_nocrit: 0, no_crit: 0, demSum: 0, demCnt: 0 });
+      agg.set(mk, { at: 0, ft: 0, no: 0, demSum: 0, demCnt: 0 });
     }
     const c = agg.get(mk);
-    c.at += toNumber(r[AT_COL]);
-    c.ft_crit += toNumber(r[FT_CRIT_COL]);
-    c.ft_nocrit += toNumber(r[FT_NOCRIT_COL]);
-    c.no_nocrit += toNumber(r[NO_NOCRIT_COL]);
-    c.no_crit += toNumber(r[NO_CRIT_COL]);
+    c.at += toNumber(r["CUMPLIDO AT"]);
+    c.ft += toNumber(r["CUMPLIDO FT"]);
+    c.no += toNumber(r["NO CUMPLIDO ALMACEN"]);
 
-    const dem = toNumAny(r[DEMORA_COL]);
+    const dem = toNumAny(r["DIAS DE DEMORA"]);
     if (!isNaN(dem)) { c.demSum += dem; c.demCnt += 1; }
   }
 
   const months = [...monthsSet].sort();
   const totals = months.map(m => {
     const c = agg.get(m);
-    return c.at + c.ft_crit + c.ft_nocrit + c.no_nocrit + c.no_crit;
+    return c.at + c.ft + c.no;
   });
 
   const pAT = months.map((m, i) => totals[i] ? (agg.get(m).at / totals[i]) * 100 : 0);
-  const pFTCrit = months.map((m, i) => totals[i] ? (agg.get(m).ft_crit / totals[i]) * 100 : 0);
-  const pFTNoCrit = months.map((m, i) => totals[i] ? (agg.get(m).ft_nocrit / totals[i]) * 100 : 0);
-  const pNONoCrit = months.map((m, i) => totals[i] ? (agg.get(m).no_nocrit / totals[i]) * 100 : 0);
-  const pNOCrit = months.map((m, i) => totals[i] ? (agg.get(m).no_crit / totals[i]) * 100 : 0);
+  const pFT = months.map((m, i) => totals[i] ? (agg.get(m).ft / totals[i]) * 100 : 0);
+  const pNO = months.map((m, i) => totals[i] ? (agg.get(m).no / totals[i]) * 100 : 0);
+
+  // Línea Violeta: % AT Acumulado
+  const pAT_acum = [];
+  let cumAT = 0, cumTotal = 0;
+  for (let i = 0; i < months.length; i++) {
+    cumAT += agg.get(months[i]).at;
+    cumTotal += totals[i];
+    pAT_acum.push(cumTotal ? (cumAT / cumTotal) * 100 : 0);
+  }
 
   const avgDem = months.map(m => {
     const c = agg.get(m);
@@ -443,26 +435,48 @@ function buildChartMes(rows) {
   if (!chartMes) chartMes = echarts.init(el, null, { renderer: "canvas" });
 
   const option = {
-    grid: { left: 60, right: 65, top: 40, bottom: 110 },
+    grid: { left: 60, right: 65, top: 40, bottom: 90 },
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      confine: true
+    },
     legend: {
       bottom: 5,
-      data: ["CUMPLIDO AT", "CUMPLIDO FT CRITICO", "CUMPLIDO FT NO CRITICO", "NO CUMPLIDO NO CRITICO", "NO CUMPLIDO CRITICO", "Días de demora"]
+      data: ["CUMPLIDO AT", "CUMPLIDO FT", "NO CUMPLIDO ALMACEN", "% AT Acumulado", "Días de demora"]
     },
     xAxis: { type: "category", data: months.map(formatMonthKey) },
-    yAxis: [{ type: "value", min: 0, max: 100 }, { type: "value", name: "Días de demora", position: "right" }],
+    yAxis: [
+      { type: "value", min: 0, max: 100, axisLabel: { formatter: "{value}%" } },
+      { type: "value", name: "Días de demora", position: "right" }
+    ],
     series: [
-      { name: "CUMPLIDO AT", type: "bar", stack: "pct", data: pAT, itemStyle: { color: COLORS.green } },
-      { name: "CUMPLIDO FT CRITICO", type: "bar", stack: "pct", data: pFTCrit, itemStyle: { color: COLORS.amber_crit } },
-      { name: "CUMPLIDO FT NO CRITICO", type: "bar", stack: "pct", data: pFTNoCrit, itemStyle: { color: COLORS.amber_light } },
-      { name: "NO CUMPLIDO NO CRITICO", type: "bar", stack: "pct", data: pNONoCrit, itemStyle: { color: COLORS.red_light } },
-      { name: "NO CUMPLIDO CRITICO", type: "bar", stack: "pct", data: pNOCrit, itemStyle: { color: COLORS.red_dark } },
-      { name: "Días de demora", type: "line", yAxisIndex: 1, data: avgDem, itemStyle: { color: COLORS.blue } }
+      { name: "CUMPLIDO AT", type: "bar", stack: "pct", data: pAT, itemStyle: { color: "#10b981" } },
+      { name: "CUMPLIDO FT", type: "bar", stack: "pct", data: pFT, itemStyle: { color: "#f59e0b" } },
+      { name: "NO CUMPLIDO ALMACEN", type: "bar", stack: "pct", data: pNO, itemStyle: { color: "#ef4444" } },
+      {
+        name: "% AT Acumulado",
+        type: "line",
+        data: pAT_acum.map(v => +(v).toFixed(2)),
+        symbol: "square",
+        symbolSize: 6,
+        lineStyle: { width: 2.5, type: "dashed", color: "#8b5cf6" }, // Violeta
+        itemStyle: { color: "#8b5cf6" },
+        label: { show: true, formatter: (p) => Math.round(p.value) + "%" }
+      },
+      {
+        name: "Días de demora",
+        type: "line",
+        yAxisIndex: 1,
+        data: avgDem,
+        lineStyle: { color: "#0284c7" },
+        itemStyle: { color: "#0284c7" }
+      }
     ]
   };
 
   chartMes.setOption(option, true);
 }
-
 function buildChartTendencia(rows) {
   // Similar logic to buildChartMes for trend lines
 }
