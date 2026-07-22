@@ -5,7 +5,8 @@ if (!cb) {
   cb = new Date().getTime();
   sessionStorage.setItem("mi_cache_buster", cb);
 }
-const CACHE_BUSTER = cb;
+// Toma la versión global definida en last-update.js (o genera una por sesión de fallback)
+const CACHE_BUSTER = window.MI_CACHE_VERSION || sessionStorage.getItem("mi_cache_buster") || new Date().getTime();
 
 window.forceRefreshData = function() {
   console.log("[almacen] Wiping cache and refreshing...");
