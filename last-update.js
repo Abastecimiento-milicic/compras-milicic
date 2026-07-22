@@ -1,12 +1,12 @@
-/* ===== CONFIGURACIÓN GLOBAL DE ACTUALIZACIÓN ===== */
+/* ===== CONFIGURACIÓN GLOBAL Y CACHÉ ===== */
 
-// 1. Cambiá únicamente esta fecha cuando actualices las bases CSV
-window.FECHA_ULTIMA_ACTUALIZACION = "14/07/2026";
+// 1. Fecha visible en la app
+window.FECHA_ULTIMA_ACTUALIZACION = "20/07/2026";   //CAMBIAR FECHA
 
-// 2. Clave de versión para renovar el caché automáticamente cuando cambies la fecha
-window.MI_CACHE_VERSION = window.FECHA_ULTIMA_ACTUALIZACION.replace(/\//g, "");
+// 2. Clave de versión global (Fallback seguro siempre)
+window.MI_CACHE_VERSION = window.FECHA_ULTIMA_ACTUALIZACION.replace(/\//g, "") || "20260722";   //CAMBIAR FECHA
 
-// Dibuja la fecha automáticamente en el encabezado
+// Dibuja la fecha automáticamente al cargar
 document.addEventListener("DOMContentLoaded", () => {
   const el = document.getElementById("lastUpdate");
   if (el) {
