@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ALMACÉN — Cumplimiento de Pedidos</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="base.css?v=20260722" />
+  <link rel="stylesheet" href="almacen.css?v=20260722" />
+  <script defer src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/lib/browser.min.js"></script>
+  <script src="cache-utils.js"></script>
+  <script src="theme.js"></script>
+</head>
+
+<body class="page-almacen">
+  <!-- LOADER -->
+  <div id="loader" class="loader-overlay">
+    <div class="spinner-bars">
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+    <div class="loading-text">Cargando reporte de cumplimiento almacén...</div>
+  </div>
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="title">ALMACÉN</div>
+      <div class="subtitle">Análisis de Cumplimiento de Almacén</div>
+    </div>
+
+    <div class="topbar-right" style="display: flex; gap: 1.5rem; align-items: center;">
+      <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+        <button class="btn-refresh-top" onclick="window.forceRefreshData()" title="Actualizar datos e invalidar cache">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
+        <div class="update-box">
+          <div class="update-label">Última actualización</div>
+          <div id="lastUpdate" class="update-date">22/07/2026</div>  
+        </div>
+      </div>
+
+      <button onclick="document.getElementById('modalExplicacion').style.display = 'flex'" style="background: none; border: none; color: rgba(255, 255, 255, 0.85); font-family: 'Montserrat', sans-serif; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; padding: 10px 4px; display: flex; align-items: center; gap: 6px; transition: color 0.2s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='rgba(255, 255, 255, 0.85)'">
+        💡 Explicación del Reporte
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="msg"></div>
+
+    <!-- FILTROS -->
+    <section class="panel">
+      <div class="panel-title">FILTROS
+        <button class="help-btn" onclick="openHelp('filtros-almacen')" title="Ayuda sobre los filtros">ℹ</button>
+      </div>
+      <div class="panel-body">
+        <div class="filters filters-5">
+          
+          <!-- 1. Cliente -->
+          <div class="filter">
+            <label>CLIENTE</label>
+            <select id="clienteSelect" multiple size="4" class="multi-select">
+              <option value="__ALL__">Todos</option>
+            </select>
+          </div>
+
+          <!-- 2. Clasificación -->
+          <div class="filter">
+            <label>CLASIFICACION</label>
+            <select id="clasificacionSelect" multiple size="4" class="multi-select">
+              <option value="__ALL__">Todos</option>
+            </select>
+          </div>
+
+          <!-- 3. Clase de Doc -->
+          <div class="filter">
+            <label>CLASE DE DOC</label>
+            <select id="claseDocSelect" multiple size="4" class="multi-select">
+              <option value="__ALL__">Todos</option>
+            </select>
+          </div>
+
+          <!-- 4. Almacén (Base ROS) -->
+          <div class="filter">
+            <label>ALMACÉN</label>
+            <select id="almacenSelect" multiple size="4" class="multi-select">
+              <option value="__ALL__">Todos</option>
+              <option value="ROSARIO">ROSARIO</option>
+              <option value="SAN JUAN">SAN JUAN</option>
+            </select>
+          </div>
+
+          <!-- 5. Mes de Entrega -->
+          <div class="filter">
+            <label>MES DE ENTREGA</label>
+            <select id="mesSelect" multiple size="4" class="multi-select"></select>
+          </div>
+
+          <!-- 6. Botones Descarga -->
+          <div class="filter download-slot" style="display: flex; flex-direction: column; gap: 6px; justify-content: flex-end; grid-column: span 5;">
+            <div style="display: flex; gap: 8px;">
+              <button id="btnDownloadBase" class="btn" style="flex: 1; height: 36px; padding: 0; font-size: 0.8rem; background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%); color: white; border: none;">
+                ⬇ Descargar Base Completa
+              </button>
+              <button id="btnDownloadNO" class="btn" style="flex: 1; height: 36px; padding: 0; font-size: 0.8rem;">
+                ⬇ Descargar NO entregados
+              </button>
+              <button id="btnDownloadFT" class="btn" style="flex: 1; height: 36px; padding: 0; font-size: 0.8rem;">
+                ⬇ Descargar FUERA de término
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- KPIs ACUMULADO -->
+    <section class="panel">
+      <div class="panel-title">CUMPLIMIENTO ACUMULADO (últimos 12 meses)
+        <button class="help-btn" onclick="openHelp('kpis-acumulado')" title="Ayuda sobre KPIs acumulados">ℹ</button>
+      </div>
+
+      <div class="panel-body kpi-grid kpi-grid-7">
+        <div class="kpi kpi-teal">
+          <div class="kpi-title">COMPROMETIDOS</div>
+          <div id="kpiTotal" class="kpi-value">-</div>
+          <div class="kpi-sub">Total Pedidos Evaluados</div>
+        </div>
+
+        <div class="kpi kpi-green">
+          <div class="kpi-title">CUMPLIDO AT</div>
+          <div id="kpiATpct" class="kpi-value">-</div>
+          <div id="kpiATqty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
+        </div>
+
+        <div class="kpi kpi-amber">
+          <div class="kpi-title">CUMPLIDO FT CRÍTICO</div>
+          <div id="kpiFTCritPct" class="kpi-value">-</div>
+          <div id="kpiFTCritQty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
+        </div>
+
+        <div class="kpi kpi-yellow">
+          <div class="kpi-title">CUMPLIDO FT NO CRÍTICO</div>
+          <div id="kpiFTNoCritPct" class="kpi-value">-</div>
+          <div id="kpiFTNoCritQty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
+        </div>
+
+        <div class="kpi kpi-coral">
+          <div class="kpi-title">NO CUMPLIDO NO CRÍTICO</div>
+          <div id="kpiNONoCritPct" class="kpi-value">-</div>
+          <div id="kpiNONoCritQty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
+        </div>
+
+        <div class="kpi kpi-red">
+          <div class="kpi-title">NO CUMPLIDO CRÍTICO</div>
+          <div id="kpiNOCritPct" class="kpi-value">-</div>
+          <div id="kpiNOCritQty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
+        </div>
+
+        <div class="kpi kpi-slate">
+          <div class="kpi-title">DEMORA PROMEDIO</div>
+          <div id="kpiDemoraAvg" class="kpi-value">-</div>
+          <div class="kpi-sub">Días promedio de desvío</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPIs MES -->
+    <section class="panel">
+      <div id="panelMesTitle" class="panel-title">CUMPLIMIENTO - MES SELECCIONADO
+        <button class="help-btn" onclick="openHelp('kpis-mes')" title="Ayuda sobre KPIs del mes">ℹ</button>
+      </div>
+
+      <div class="panel-body kpi-grid kpi-grid-7">
+        <div class="kpi kpi-teal">
+          <div class="kpi-title">COMPROMETIDOS (MES)</div>
+          <div id="kpiTotalMes" class="kpi-value">-</div>
+          <div class="kpi-sub">Total del mes</div>
+        </div>
+
+        <div class="kpi kpi-green">
+          <div class="kpi-title">% CUMPLIDO AT (MES)</div>
+          <div id="kpiATmes" class="kpi-value">-</div>
+          <div id="kpiATmesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
+        </div>
+
+        <div class="kpi kpi-amber">
+          <div class="kpi-title">% CUMPLIDO FT CRÍTICO (MES)</div>
+          <div id="kpiFTCritMes" class="kpi-value">-</div>
+          <div id="kpiFTCritMesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
+        </div>
+
+        <div class="kpi kpi-yellow">
+          <div class="kpi-title">% CUMPLIDO FT NO CRÍTICO (MES)</div>
+          <div id="kpiFTNoCritMes" class="kpi-value">-</div>
+          <div id="kpiFTNoCritMesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
+        </div>
+
+        <div class="kpi kpi-coral">
+          <div class="kpi-title">% NO CUMPLIDO NO CRÍTICO (MES)</div>
+          <div id="kpiNONoCritMes" class="kpi-value">-</div>
+          <div id="kpiNONoCritMesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
+        </div>
+
+        <div class="kpi kpi-red">
+          <div class="kpi-title">% NO CUMPLIDO CRÍTICO (MES)</div>
+          <div id="kpiNOCritMes" class="kpi-value">-</div>
+          <div id="kpiNOCritMesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
+        </div>
+
+        <div class="kpi kpi-slate">
+          <div class="kpi-title">DEMORA (MES)</div>
+          <div id="kpiDemoraMes" class="kpi-value">-</div>
+          <div class="kpi-sub kpi-sub-strong">Promedio del mes</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRÁFICOS -->
+    <section class="panel">
+      <div class="panel-title">GRÁFICO DE CUMPLIMIENTO ALMACÉN
+        <button class="help-btn" onclick="openHelp('grafico-mes')" title="Ayuda sobre el gráfico por mes">ℹ</button>
+      </div>
+      <div class="panel-body">
+        <div class="chart-card">
+          <div class="chart-wrap">
+            <div id="chartMes" class="chart-box" style="height: 550px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">TENDENCIA DE CUMPLIMIENTO
+        <button class="help-btn" onclick="openHelp('grafico-tendencia')" title="Ayuda sobre la tendencia">ℹ</button>
+      </div>
+      <div class="panel-body">
+        <div class="chart-card">
+          <div class="chart-wrap">
+            <div id="chartTendencia" class="chart-box" style="height: 400px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footnote">
+    LOGÍSTICA — Evaluación de Cumplimiento de Almacén.
+  </footer>
+
+  <script>
+    function openHelp(section) {
+      const messages = {
+        'filtros-almacen': 'Filtros de Evaluación:\nPermiten filtrar las solicitudes del almacén por Cliente, Clasificación, Clase de Doc y Almacén (Rosario vs San Juan).',
+        'kpis-acumulado': 'Cumplimiento Acumulado:\nMuestra el desempeño del almacén en los últimos 12 meses evaluados.',
+        'kpis-mes': 'Cumplimiento - Mes Seleccionado:\nMuestra las métricas específicas y deltas respecto al mes anterior.',
+        'grafico-mes': 'Gráfico de Cumplimiento Resumen:\nEvolución mensual del cumplimiento de despacho/salida de pañol.',
+        'grafico-tendencia': 'Tendencia Histórica:\nLíneas de tendencia de las categorías del almacén.'
+      };
+      alert(messages[section] || 'Ayuda no disponible para esta sección.');
+    }
+  </script>
+  <script defer src="almacen.js?v=20260722"></script>
+</body>
+
+</html>
