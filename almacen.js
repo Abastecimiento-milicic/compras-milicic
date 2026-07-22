@@ -53,23 +53,17 @@ const CLASIFICACION_COL = "CLASIFICACION";
 const CLASE_DOC_COL = "CLASE DE DOC";
 const BASE_ROS_COL = "BASE ROS";
 
-const AT_COL = "CUMPLIDO AT";
-const FT_CRIT_COL = "CUMPLIDO FT CRITICO";
-const FT_NOCRIT_COL = "CUMPLIDO FT NO CRITICO";
-const NO_NOCRIT_COL = "NO CUMPLIDO NO CRITICO";
-const NO_CRIT_COL = "NO CUMPLIDO CRITICO";
+const TARGET_OBJ = 78; // Objetivo Almacén: 78%
 
 /* ============================
-   COLORES (TEMA ALMACÉN - TEAL/PETROL)
+   COLORES (TEMA ALMACÉN - NARANJA)
    ============================ */
 const COLORS = {
   green: "#10b981",       
-  amber_crit: "#f59e0b",  
-  amber_light: "#fcd34d", 
-  red_light: "#fca5a5",   
-  red_dark: "#ef4444",    
+  amber: "#f59e0b",  
+  red: "#ef4444",    
   purple: "#8b5cf6",      
-  teal_brand: "#0D9488",  
+  orange_brand: "#F26716",  
   blue: "#0284c7"
 };
 
@@ -320,9 +314,6 @@ function avgDelay(rows) {
   return c ? (s / c) : NaN;
 }
 
-/* ============================
-   KPI CALCULATIONS & UPDATES
-   ============================ */
 function calcTotals(rows) {
   let at = 0, ft = 0, no = 0;
   for (const r of rows) {
@@ -337,7 +328,7 @@ function calcTotals(rows) {
 function calcMonthTotals(rows, month) {
   let at = 0, ft = 0, no = 0;
   for (const r of rows) {
-    if (clean(r["Mes-Año"]) !== month) continue;
+    if (clean(r[MONTH_COL]) !== month) continue;
     at += toNumber(r["CUMPLIDO AT"]);
     ft += toNumber(r["CUMPLIDO FT"]);
     no += toNumber(r["NO CUMPLIDO ALMACEN"]);
@@ -353,10 +344,15 @@ function calcMonthTotals(rows, month) {
 
 function updateKPIsGeneral(rows) {
   const t = calcTotals(rows);
+  const pctAT = t.total ? t.at / t.total : NaN;
+
   setText("kpiTotal", fmtInt(t.total));
-  setText("kpiATpct", fmtPct01(t.total ? t.at / t.total : NaN));
+  setText("kpiATpct", fmtPct01(pctAT));
   setText("kpiATqty", `Cantidad: ${fmtInt(t.at)}`);
   
+  const elAT = document.getElementById("kpiATpct");
+  if (elAT) elAT.style.color = (isFinite(pctAT) && pctAT >= (TARGET_OBJ / 100)) ? "#10b981" : "#ef4444";
+
   setText("kpiFTPct", fmtPct01(t.total ? t.ft / t.total : NaN));
   setText("kpiFTQty", `Cantidad: ${fmtInt(t.ft)}`);
 
@@ -365,6 +361,8 @@ function updateKPIsGeneral(rows) {
 
   const avgG = avgDelay(rows);
   setText("kpiDemoraAvg", isNaN(avgG) ? "-" : (Math.round(avgG) + " d"));
+  const elDemG = document.getElementById("kpiDemoraAvg");
+  if (elDemG) elDemG.style.color = (!isNaN(avgG) && avgG > 7) ? "#ef4444" : "#10b981";
 }
 
 function updateKPIsMonthly(rows, months) {
@@ -374,23 +372,29 @@ function updateKPIsMonthly(rows, months) {
   const cur = calcMonthTotals(rows, mes);
   setText("kpiTotalMes", fmtInt(cur.total));
   setText("kpiATmes", fmtPct01(cur.pctAT));
+  
+  const elATmes = document.getElementById("kpiATmes");
+  if (elATmes) elATmes.style.color = (isFinite(cur.pctAT) && cur.pctAT >= (TARGET_OBJ / 100)) ? "#10b981" : "#ef4444";
+
   setText("kpiFTmes", fmtPct01(cur.pctFT));
   setText("kpiNOmes", fmtPct01(cur.pctNO));
 
-  const mesRows = rows.filter(r => clean(r["Mes-Año"]) === mes);
+  const mesRows = rows.filter(r => clean(r[MONTH_COL]) === mes);
   const avgM = avgDelay(mesRows);
   setText("kpiDemoraMes", isNaN(avgM) ? "-" : (Math.round(avgM) + " d"));
+  const elDemM = document.getElementById("kpiDemoraMes");
+  if (elDemM) elDemM.style.color = (!isNaN(avgM) && avgM > 7) ? "#ef4444" : "#10b981";
 }
 
 /* ============================
-   CHARTS (ECHARTS ALMACÉN)
+   CHARTS (ECHARTS ALMACÉN COMPLETO)
    ============================ */
 function buildChartMes(rows) {
   const agg = new Map();
   const monthsSet = new Set();
 
   for (const r of rows) {
-    const mk = clean(r["Mes-Año"]);
+    const mk = clean(r[MONTH_COL]);
     if (!mk) continue;
     monthsSet.add(mk);
 
@@ -402,29 +406,31 @@ function buildChartMes(rows) {
     c.ft += toNumber(r["CUMPLIDO FT"]);
     c.no += toNumber(r["NO CUMPLIDO ALMACEN"]);
 
-    const dem = toNumAny(r["DIAS DE DEMORA"]);
+    const dem = toNumAny(r[DEMORA_COL]);
     if (!isNaN(dem)) { c.demSum += dem; c.demCnt += 1; }
   }
 
   const months = [...monthsSet].sort();
-  const totals = months.map(m => {
-    const c = agg.get(m);
-    return c.at + c.ft + c.no;
-  });
+  const qAT = months.map(m => agg.get(m)?.at ?? 0);
+  const qFT = months.map(m => agg.get(m)?.ft ?? 0);
+  const qNO = months.map(m => agg.get(m)?.no ?? 0);
 
-  const pAT = months.map((m, i) => totals[i] ? (agg.get(m).at / totals[i]) * 100 : 0);
-  const pFT = months.map((m, i) => totals[i] ? (agg.get(m).ft / totals[i]) * 100 : 0);
-  const pNO = months.map((m, i) => totals[i] ? (agg.get(m).no / totals[i]) * 100 : 0);
+  const totals = months.map((_, i) => qAT[i] + qFT[i] + qNO[i]);
+
+  const pAT = months.map((_, i) => totals[i] ? (qAT[i] / totals[i]) * 100 : 0);
+  const pFT = months.map((_, i) => totals[i] ? (qFT[i] / totals[i]) * 100 : 0);
+  const pNO = months.map((_, i) => totals[i] ? (qNO[i] / totals[i]) * 100 : 0);
 
   // Línea Violeta: % AT Acumulado
   const pAT_acum = [];
   let cumAT = 0, cumTotal = 0;
   for (let i = 0; i < months.length; i++) {
-    cumAT += agg.get(months[i]).at;
+    cumAT += qAT[i];
     cumTotal += totals[i];
     pAT_acum.push(cumTotal ? (cumAT / cumTotal) * 100 : 0);
   }
 
+  // Días de demora promedio
   const avgDem = months.map(m => {
     const c = agg.get(m);
     return (c && c.demCnt) ? (c.demSum / c.demCnt) : null;
@@ -434,51 +440,374 @@ function buildChartMes(rows) {
   if (!el || !window.echarts) return;
   if (!chartMes) chartMes = echarts.init(el, null, { renderer: "canvas" });
 
+  const labelMonths = months.map(formatMonthKey);
+
   const option = {
-    grid: { left: 60, right: 65, top: 40, bottom: 90 },
+    grid: { left: 50, right: 65, top: 40, bottom: 80 },
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "shadow" },
-      confine: true
+      confine: true,
+      formatter: (params) => {
+        const idx = params?.[0]?.dataIndex ?? 0;
+        const rawM = months[idx] ?? "";
+        let html = `<b>${rawM.toUpperCase()} (Total: ${fmtInt(totals[idx])})</b><br/>`;
+        
+        const byName = Object.fromEntries(params.map(p => [p.seriesName, p]));
+        const at = byName["Entregados AT"];
+        const ft = byName["Entregados FT"];
+        const no = byName["No entregados"];
+        const cum = byName["%AT Acumulado"];
+        const dem = byName["Promedio días de demora"];
+
+        if (at) html += `${at.marker} Entregados AT: <b>${fmtInt(qAT[idx])}</b> (${_fmtNum1(at.value)}%)<br/>`;
+        if (ft) html += `${ft.marker} Entregados FT: <b>${fmtInt(qFT[idx])}</b> (${_fmtNum1(ft.value)}%)<br/>`;
+        if (no) html += `${no.marker} No entregados: <b>${fmtInt(qNO[idx])}</b> (${_fmtNum1(no.value)}%)<br/>`;
+        if (cum) html += `${cum.marker} <span style="color:#8b5cf6;">%AT Acumulado: <b>${_fmtNum1(cum.value)}%</b></span><br/>`;
+        if (dem && dem.value != null) html += `${dem.marker} <span style="color:#0284c7;">Demora prom.: <b>${_fmtNum1(dem.value)}</b> d</span><br/>`;
+        return html;
+      }
     },
     legend: {
       bottom: 5,
-      data: ["CUMPLIDO AT", "CUMPLIDO FT", "NO CUMPLIDO ALMACEN", "% AT Acumulado", "Días de demora"]
+      left: "center",
+      itemWidth: 14,
+      itemHeight: 10,
+      textStyle: { fontWeight: 700, fontSize: 11 },
+      data: ["Entregados AT", "Entregados FT", "No entregados", "%AT Acumulado", "Promedio días de demora"]
     },
-    xAxis: { type: "category", data: months.map(formatMonthKey) },
+    xAxis: {
+      type: "category",
+      data: labelMonths,
+      axisLabel: { fontWeight: 700, fontSize: 10 }
+    },
     yAxis: [
-      { type: "value", min: 0, max: 100, axisLabel: { formatter: "{value}%" } },
-      { type: "value", name: "Días de demora", position: "right" }
+      {
+        type: "value",
+        min: 0,
+        max: 100,
+        interval: 20,
+        axisLabel: { formatter: "{value}%", fontWeight: 700 },
+        splitLine: { lineStyle: { color: "rgba(15,23,42,0.06)" } }
+      },
+      {
+        type: "value",
+        name: "Días de demora",
+        nameTextStyle: { fontWeight: 700 },
+        position: "right",
+        min: 0,
+        max: 25,
+        interval: 5,
+        axisLabel: { fontWeight: 700 },
+        splitLine: { show: false }
+      }
     ],
     series: [
-      { name: "CUMPLIDO AT", type: "bar", stack: "pct", data: pAT, itemStyle: { color: "#10b981" } },
-      { name: "CUMPLIDO FT", type: "bar", stack: "pct", data: pFT, itemStyle: { color: "#f59e0b" } },
-      { name: "NO CUMPLIDO ALMACEN", type: "bar", stack: "pct", data: pNO, itemStyle: { color: "#ef4444" } },
       {
-        name: "% AT Acumulado",
+        name: "Entregados AT",
+        type: "bar",
+        stack: "pct",
+        data: pAT.map((v, idx) => {
+          const val = +(v).toFixed(2);
+          const q = qAT[idx];
+          const pct = Math.round(v);
+          if (v < TARGET_OBJ) {
+            return {
+              value: val,
+              itemStyle: { borderColor: "#ef4444", borderWidth: 2, borderType: "solid" },
+              label: {
+                show: true,
+                position: "inside",
+                backgroundColor: "#ffffff",
+                borderColor: "#ef4444",
+                borderWidth: 1.5,
+                borderRadius: 4,
+                padding: [3, 5],
+                color: "#b91c1c",
+                fontWeight: 900,
+                fontSize: 9,
+                formatter: () => `⚠️ ${fmtInt(q)}\n(${pct}%)`
+              }
+            };
+          } else {
+            return {
+              value: val,
+              label: {
+                show: true,
+                position: "inside",
+                fontWeight: 900,
+                fontSize: 9,
+                color: "#ffffff",
+                formatter: () => `${fmtInt(q)}\n(${pct}%)`
+              }
+            };
+          }
+        }),
+        barMaxWidth: 44,
+        itemStyle: { color: COLORS.green }
+      },
+      {
+        name: "Entregados FT",
+        type: "bar",
+        stack: "pct",
+        data: pFT.map((v, idx) => {
+          const val = +(v).toFixed(2);
+          const q = qFT[idx];
+          const pct = Math.round(v);
+          return {
+            value: val,
+            label: {
+              show: true,
+              position: "inside",
+              fontWeight: 900,
+              fontSize: 9,
+              color: "#0f172a",
+              formatter: () => pct > 5 ? `${fmtInt(q)}\n(${pct}%)` : ""
+            }
+          };
+        }),
+        barMaxWidth: 44,
+        itemStyle: { color: COLORS.amber }
+      },
+      {
+        name: "No entregados",
+        type: "bar",
+        stack: "pct",
+        data: pNO.map((v, idx) => {
+          const val = +(v).toFixed(2);
+          const q = qNO[idx];
+          const pct = Math.round(v);
+          return {
+            value: val,
+            label: {
+              show: true,
+              position: "top",
+              backgroundColor: "#ef4444",
+              color: "#ffffff",
+              borderRadius: 3,
+              padding: [2, 4],
+              fontWeight: 900,
+              fontSize: 9,
+              formatter: () => `${fmtInt(q)} (${pct}%)`
+            }
+          };
+        }),
+        barMaxWidth: 44,
+        itemStyle: { color: COLORS.red }
+      },
+      {
+        name: "%AT Acumulado",
         type: "line",
         data: pAT_acum.map(v => +(v).toFixed(2)),
         symbol: "square",
         symbolSize: 6,
-        lineStyle: { width: 2.5, type: "dashed", color: "#8b5cf6" }, // Violeta
-        itemStyle: { color: "#8b5cf6" },
-        label: { show: true, formatter: (p) => Math.round(p.value) + "%" }
+        lineStyle: { width: 3, color: COLORS.purple },
+        itemStyle: { color: COLORS.purple, borderColor: "#fff", borderWidth: 1.5 },
+        label: {
+          show: true,
+          position: "top",
+          backgroundColor: "#ffffff",
+          borderColor: COLORS.purple,
+          borderWidth: 1,
+          borderRadius: 4,
+          padding: [2, 4],
+          fontWeight: 900,
+          fontSize: 9,
+          color: COLORS.purple,
+          formatter: (p) => _fmtPct(p.value)
+        },
+        markLine: {
+          silent: true,
+          symbol: ["none", "none"],
+          lineStyle: { type: "dashed", width: 2, color: "#334155" },
+          data: [
+            {
+              yAxis: TARGET_OBJ,
+              label: {
+                show: true,
+                position: "end",
+                fontWeight: 900,
+                fontSize: 11,
+                backgroundColor: "#1e293b",
+                borderRadius: 4,
+                padding: [4, 6],
+                color: "#ffffff",
+                formatter: `Obj ${TARGET_OBJ}%`
+              }
+            }
+          ]
+        }
       },
       {
-        name: "Días de demora",
+        name: "Promedio días de demora",
         type: "line",
         yAxisIndex: 1,
         data: avgDem,
-        lineStyle: { color: "#0284c7" },
-        itemStyle: { color: "#0284c7" }
+        symbol: "circle",
+        symbolSize: 7,
+        lineStyle: { width: 2.5, color: COLORS.blue },
+        itemStyle: { color: COLORS.blue, borderColor: "#fff", borderWidth: 2 },
+        label: {
+          show: true,
+          position: "bottom",
+          backgroundColor: "#ffffff",
+          borderColor: COLORS.blue,
+          borderWidth: 1,
+          padding: [2, 5],
+          borderRadius: 4,
+          fontWeight: 900,
+          fontSize: 10,
+          color: COLORS.blue,
+          formatter: (p) => (p.value == null || isNaN(p.value)) ? "" : `${Math.round(p.value)} d`
+        },
+        markLine: {
+          silent: true,
+          symbol: ["none", "none"],
+          lineStyle: { type: "dashed", width: 1.5, color: "#475569" },
+          data: [
+            {
+              yAxis: 7,
+              label: {
+                show: true,
+                position: "end",
+                fontWeight: 900,
+                fontSize: 10,
+                backgroundColor: "#334155",
+                borderRadius: 3,
+                padding: [3, 5],
+                color: "#ffffff",
+                formatter: "Lím 7 d"
+              }
+            }
+          ]
+        }
       }
     ]
   };
 
   chartMes.setOption(option, true);
 }
+
+/* ============================
+   CHART 2: TENDENCIA HISTÓRICA
+   ============================ */
 function buildChartTendencia(rows) {
-  // Similar logic to buildChartMes for trend lines
+  const agg = new Map();
+  const monthsSet = new Set();
+
+  for (const r of rows) {
+    const mk = clean(r[MONTH_COL]);
+    if (!mk) continue;
+    monthsSet.add(mk);
+
+    if (!agg.has(mk)) {
+      agg.set(mk, { at: 0, ft: 0, no: 0 });
+    }
+    const c = agg.get(mk);
+    c.at += toNumber(r["CUMPLIDO AT"]);
+    c.ft += toNumber(r["CUMPLIDO FT"]);
+    c.no += toNumber(r["NO CUMPLIDO ALMACEN"]);
+  }
+
+  const months = [...monthsSet].sort();
+  const totals = months.map(m => agg.get(m).at + agg.get(m).ft + agg.get(m).no);
+
+  const pAT = months.map((m, i) => totals[i] ? (agg.get(m).at / totals[i]) * 100 : 0);
+  const pFT = months.map((m, i) => totals[i] ? (agg.get(m).ft / totals[i]) * 100 : 0);
+  const pNO = months.map((m, i) => totals[i] ? (agg.get(m).no / totals[i]) * 100 : 0);
+
+  const el = document.getElementById("chartTendencia");
+  if (!el || !window.echarts) return;
+  if (!chartTendencia) chartTendencia = echarts.init(el, null, { renderer: "canvas" });
+
+  const labelMonths = months.map(formatMonthKey);
+
+  const option = {
+    grid: { left: 50, right: 30, top: 40, bottom: 60 },
+    tooltip: { trigger: "axis", confine: true },
+    legend: {
+      bottom: 5,
+      left: "center",
+      textStyle: { fontWeight: 700, fontSize: 11 },
+      data: ["A Tiempo %", "Fuera Tiempo %", "No Entregados %"]
+    },
+    xAxis: { type: "category", data: labelMonths, axisLabel: { fontWeight: 700 } },
+    yAxis: {
+      type: "value",
+      min: 0,
+      max: 100,
+      axisLabel: { formatter: "{value}%", fontWeight: 700 },
+      splitLine: { lineStyle: { color: "rgba(15,23,42,0.06)" } }
+    },
+    series: [
+      {
+        name: "A Tiempo %",
+        type: "line",
+        data: pAT.map(v => {
+          const val = +(v).toFixed(1);
+          if (v < TARGET_OBJ) {
+            return {
+              value: val,
+              label: {
+                show: true,
+                position: "top",
+                backgroundColor: "#ffffff",
+                borderColor: "#ef4444",
+                borderWidth: 1.5,
+                borderRadius: 4,
+                padding: [2, 4],
+                color: "#b91c1c",
+                fontWeight: 900,
+                formatter: (p) => `⚠️ ${_fmtNum1(p.value)}%`
+              }
+            };
+          }
+          return {
+            value: val,
+            label: {
+              show: true,
+              position: "top",
+              fontWeight: 900,
+              color: "#10b981",
+              formatter: (p) => `${_fmtNum1(p.value)}%`
+            }
+          };
+        }),
+        lineStyle: { width: 3, color: COLORS.green },
+        itemStyle: { color: COLORS.green }
+      },
+      {
+        name: "Fuera Tiempo %",
+        type: "line",
+        data: pFT.map(v => +(v).toFixed(1)),
+        lineStyle: { width: 2.5, color: COLORS.amber },
+        itemStyle: { color: COLORS.amber },
+        label: {
+          show: true,
+          position: "top",
+          fontWeight: 800,
+          color: "#0f172a",
+          formatter: (p) => `${_fmtNum1(p.value)}%`
+        }
+      },
+      {
+        name: "No Entregados %",
+        type: "line",
+        data: pNO.map(v => +(v).toFixed(1)),
+        lineStyle: { width: 2.5, color: COLORS.red },
+        itemStyle: { color: COLORS.red },
+        label: {
+          show: true,
+          position: "top",
+          fontWeight: 800,
+          color: "#b91c1c",
+          formatter: (p) => `${_fmtNum1(p.value)}%`
+        }
+      }
+    ]
+  };
+
+  chartTendencia.setOption(option, true);
 }
 
 /* ============================
@@ -507,6 +836,7 @@ function applyAll() {
   updateKPIsGeneral(rows);
   updateKPIsMonthly(rows, months);
   buildChartMes(rows);
+  buildChartTendencia(rows);
 }
 
 /* ============================
@@ -518,7 +848,6 @@ window.addEventListener("DOMContentLoaded", () => {
     const gzUrl = csvUrl + ".gz?v=" + CACHE_BUSTER;
     const rawUrl = csvUrl + "?v=" + CACHE_BUSTER;
 
-    // Si cache-utils.js está cargado, usa la memoria local instantánea
     if (typeof window.fetchWithCache === "function") {
       try {
         return await window.fetchWithCache(gzUrl);
@@ -561,6 +890,16 @@ window.addEventListener("DOMContentLoaded", () => {
       document.getElementById("btnDownloadBase")?.addEventListener("click", () => {
         downloadCSV("BASE_COMPLETA_ALMACEN.csv", filteredRowsByAll(), headers);
       });
+
+      document.getElementById("btnDownloadNO")?.addEventListener("click", () => {
+        const rows = filteredRowsByAll().filter(r => toNumber(r["NO CUMPLIDO ALMACEN"]) > 0);
+        downloadCSV("NO_CUMPLIDOS_ALMACEN.csv", rows, headers);
+      });
+
+      document.getElementById("btnDownloadFT")?.addEventListener("click", () => {
+        const rows = filteredRowsByAll().filter(r => toNumber(r["CUMPLIDO FT"]) > 0);
+        downloadCSV("FUERA_TERMINO_ALMACEN.csv", rows, headers);
+      });
     })
     .catch(err => {
       console.error(err);
@@ -571,3 +910,8 @@ window.addEventListener("DOMContentLoaded", () => {
       if (loader && !loader.classList.contains("hidden")) loader.classList.add("hidden");
     });
 });
+
+window.addEventListener("resize", () => {
+  if (chartMes) chartMes.resize();
+  if (chartTendencia) chartTendencia.resize();
+}, { passive: true });
