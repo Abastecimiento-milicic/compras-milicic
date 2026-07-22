@@ -18,7 +18,6 @@ window.forceRefreshData = function() {
   }
 };
 
-
 function _fmtPct(v) { 
   if (v == null || isNaN(v)) return ""; 
   const n = Math.round(v * 10) / 10; 
@@ -69,15 +68,15 @@ const NO_CRIT_COL = "NO CUMPLIDO CRITICO";
    COLORES (TEMA CUMPLIMIENTO COMPRAS)
    ============================ */
 const COLORS = {
-  green: "#10b981",       // Verde - CUMPLIDO AT (Sede)
-  amber_crit: "#f59e0b",  // Naranja - CUMPLIDO FT CRITICO (Sede)
+  green: "#10b981",       // Verde - CUMPLIDO AT
+  amber_crit: "#f59e0b",  // Naranja - CUMPLIDO FT CRITICO
   amber_light: "#fcd34d", // Amarillo claro - CUMPLIDO FT NO CRITICO
   red_light: "#fca5a5",   // Rojo claro - NO CUMPLIDO NO CRITICO
-  red_dark: "#ef4444",    // Rojo oscuro - NO CUMPLIDO CRITICO (Sede)
+  red_dark: "#ef4444",    // Rojo oscuro - NO CUMPLIDO CRITICO
   purple: "#a855f7",      // Púrpura - % AT Acumulado
   line_green: "#F26716",  // Naranja Objetivo - Invertido
   line_red: "#ef4444",    // Rojo Demora
-  blue: "#2563eb",        // Azul de contraste para Demora (Sede)
+  blue: "#2563eb",        // Azul de contraste para Demora
   grid: "rgba(15, 23, 42, 0.08)",
   text: "#0f172a",
   muted: "#64748b",
@@ -270,14 +269,6 @@ function getSingleMes(months) {
 /* ============================
    FILTERING LOGIC
    ============================ */
-
-/* ============================
-   FILTERING LOGIC
-   ============================ */
-
-/* ============================
-   FILTERING LOGIC
-   ============================ */
 function filteredRowsNoMes() {
   let rows = data;
 
@@ -289,27 +280,23 @@ function filteredRowsNoMes() {
   const clients = getSelValues("clienteSelect");
   if (clients.length) rows = rows.filter(r => clients.includes(clean(r[CLIENTE_COL])));
 
-  // 3. Clasificacion
+  // 3. Clasificación
   const clasifs = getSelValues("clasificacionSelect");
   if (clasifs.length) rows = rows.filter(r => clasifs.includes(clean(r[CLASIFICACION_COL])));
 
-  // 4. Clasificacion Pedidos
-  const clasifPeds = getSelValues("clasifPedidosSelect");
-  if (clasifPeds.length) rows = rows.filter(r => clasifPeds.includes(clean(r[CLASIF_PEDIDOS_COL])));
-
-  // 5. Grupo Compra Solped
-  const solpeds = getSelValues("gcsolpedSelect");
-  if (solpeds.length) rows = rows.filter(r => solpeds.includes(clean(r[GC_SOLPED_COL])));
-
-  // 6. Grupo Compra OC
+  // 4. Grupo Compra OC
   const ocs = getSelValues("gcocSelect");
   if (ocs.length) rows = rows.filter(r => ocs.includes(clean(r[GC_OC_COL])));
 
-  // 7. Proveedor
+  // 5. Centro
+  const centros = getSelValues("centroSelect");
+  if (centros.length) rows = rows.filter(r => centros.includes(clean(r[CENTRO_COL])));
+
+  // 6. Proveedor
   const provs = getSelValues("proveedorSelect");
   if (provs.length) rows = rows.filter(r => provs.includes(clean(r[PROVEEDOR_COL])));
 
- // 8. Solo Compras Abastecimiento (Caja de lista fija)
+  // 7. Solo Compras Abastecimiento
   const abastVals = getSelValues("comprasAbastecimientoSelect");
   if (abastVals.includes("SI")) {
     rows = rows.filter(r => toNumber(r[COMPRAS_NICO_COL]) === 1);
@@ -326,10 +313,8 @@ function filteredRowsByAll() {
   return rows.filter(r => set.has(clean(r[MONTH_COL])));
 }
 
-/* Clasificacion filter converted to standard multi-select */
-
 function renderComprasAbastecimiento() {
-  const container = document.getElementById("comprasAbastecimientoList"); // ID nuevo para el HTML
+  const container = document.getElementById("comprasAbastecimientoList");
   if (!container) return;
 
   container.innerHTML = "";
@@ -374,15 +359,6 @@ function renderComprasAbastecimiento() {
       applyAll();
     });
   });
-}
-
-function getCheckedComprasAbastecimiento() {
-  const container = document.getElementById("comprasAbastecimientoList");
-  if (!container) return ["SI"]; 
-  const allCb = container.querySelector(".check-all-cb");
-  if (allCb && allCb.checked) return ["SI", "NO"];
-  const checked = [...container.querySelectorAll(".abast-cb:checked")].map(cb => cb.value);
-  return checked;
 }
 
 function buildMesSelect(rows) {
@@ -719,12 +695,6 @@ function buildChartMes(rows) {
     pAT_acum.push(cumTotal ? (cumAT / cumTotal) * 100 : 0);
   }
 
-  // Green Line: ObjetivoCompras Dynamic
-  const avgObj = months.map(m => {
-    const c = agg.get(m);
-    return (c && c.objCnt) ? (c.objSum / c.objCnt) * 100 : 70; // fallback to 70%
-  });
-
   // Red Line: Average days of delay
   const avgDem = months.map(m => {
     const c = agg.get(m);
@@ -778,7 +748,7 @@ function buildChartMes(rows) {
       data: [
         "CUMPLIDO AT", "CUMPLIDO FT CRITICO", "CUMPLIDO FT NO CRITICO", 
         "NO CUMPLIDO NO CRITICO", "NO CUMPLIDO CRITICO", 
-        "% AT Acumulado", "Min de ObjetivoCompras", "Días de demora"
+        "% AT Acumulado", "Días de demora"
       ]
     },
     xAxis: {
@@ -789,7 +759,6 @@ function buildChartMes(rows) {
         fontWeight: 700,
         fontSize: 9,
         formatter: (val, idx) => {
-          const mKey = months[idx];
           const tot = totals[idx] ?? 0;
           return `${val.toUpperCase()}\nTOTAL ${fmtInt(tot)}`;
         }
@@ -826,11 +795,7 @@ function buildChartMes(rows) {
             const pct = Math.round(v);
             return {
               value: val,
-              itemStyle: {
-                borderColor: "#ef4444",
-                borderWidth: 2,
-                borderType: "solid"
-              },
+              itemStyle: { borderColor: "#ef4444", borderWidth: 2, borderType: "solid" },
               label: {
                 show: true,
                 position: "inside",
@@ -846,9 +811,7 @@ function buildChartMes(rows) {
               }
             };
           } else {
-            return {
-              value: val
-            };
+            return { value: val };
           }
         }),
         barMaxWidth: 48,
@@ -1033,7 +996,6 @@ function buildChartMes(rows) {
   };
 
   chartMes.setOption(option, true);
-  window.addEventListener("resize", () => chartMes && chartMes.resize(), { passive: true });
 }
 
 /* ============================
@@ -1049,13 +1011,7 @@ function buildChartTendencia(rows) {
     monthsSet.add(mk);
 
     if (!agg.has(mk)) {
-      agg.set(mk, { 
-        at: 0, 
-        ft_crit: 0, 
-        ft_nocrit: 0, 
-        no_nocrit: 0, 
-        no_crit: 0
-      });
+      agg.set(mk, { at: 0, ft_crit: 0, ft_nocrit: 0, no_nocrit: 0, no_crit: 0 });
     }
     const c = agg.get(mk);
 
@@ -1091,7 +1047,6 @@ function buildChartTendencia(rows) {
     pNOCrit.push(t ? (qNOCrit[i] / t) * 100 : 0);
   }
 
-  // Purple Line: AT Acumulado %
   const pAT_acum = [];
   let cumAT = 0;
   let cumTotal = 0;
@@ -1248,7 +1203,6 @@ function buildChartTendencia(rows) {
   };
 
   chartTendencia.setOption(option, true);
-  window.addEventListener("resize", () => chartTendencia && chartTendencia.resize(), { passive: true });
 }
 
 /* ============================
@@ -1282,54 +1236,40 @@ function getNoEntregadosRows(rows) {
   return rows.filter(r => toNumber(r[NO_NOCRIT_COL]) > 0 || toNumber(r[NO_CRIT_COL]) > 0);
 }
 
-// NUEVA FUNCIÓN AGREGADA
 function getFueraDeTerminoRows(rows) {
   return rows.filter(r => toNumber(r[FT_CRIT_COL]) > 0 || toNumber(r[FT_NOCRIT_COL]) > 0);
 }
+
 /* ============================
    APPLY ALL FILTERS & RE-RENDER
    ============================ */
-/* ============================
-   RECALCULO DE FILTROS SUBORDINADOS
-   ============================ */
-/* ============================
-   RECALCULO DE FILTROS SUBORDINADOS
-   ============================ */
 function updateSubordinatedFilters() {
- // 1. Obtenemos las filas filtradas ÚNICAMENTE por el select de Abastecimiento
   let rowsForSub = data;
   const abastVals = getSelValues("comprasAbastecimientoSelect");
   if (abastVals.includes("SI")) {
     rowsForSub = rowsForSub.filter(r => toNumber(r[COMPRAS_NICO_COL]) === 1);
   }
 
-  // 2. Extraemos los valores únicos de esa porción de datos
   const activeBuyers = uniqSorted(rowsForSub.map(r => r[COMPRADOR_COL]));
   const activeOcs = uniqSorted(rowsForSub.map(r => r[GC_OC_COL]));
 
-  // 3. Volvemos a llenar los select manteniendo la selección previa si existía
   fillSelect("compradorSelect", activeBuyers, "Todos");
   fillSelect("gcocSelect", activeOcs, "Todos");
 }
 
-
-
 function applyAll() {
-  // RECALCULO DE SUBORDINADOS ANTES DE FILTRAR LA BASE GENERAL
   updateSubordinatedFilters();
 
   const rows = filteredRowsNoMes();
-
   const months = buildMesSelect(rows);
 
-  // Update KPIs general & monthly
   updateKPIsGeneral(rows);
   updateKPIsMonthly(rows, months);
 
-  // Render Charts
   buildChartMes(rows);
   buildChartTendencia(rows);
 }
+
 /* ============================
    INITIALIZATION
    ============================ */
@@ -1339,7 +1279,6 @@ window.addEventListener("DOMContentLoaded", () => {
     const gzUrl = csvUrl + ".gz?v=" + CACHE_BUSTER;
     const rawUrl = csvUrl + "?v=" + CACHE_BUSTER;
 
-    // Si la utilidad de caché está disponible, va directo a IndexedDB/memoria
     if (typeof window.fetchWithCache === "function") {
       try {
         return await window.fetchWithCache(gzUrl);
@@ -1348,7 +1287,6 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Fallback limpio a red si no hay cache-utils
     const response = await fetch(rawUrl);
     if (!response.ok) throw new Error(`No se pudo abrir ${csvUrl}`);
     return response.text();
@@ -1356,7 +1294,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   loadData()
     .then(text => {
-      // Parse CSV
       if (typeof Papa !== 'undefined') {
         const results = Papa.parse(text, {
           delimiter: DELIM,
@@ -1370,7 +1307,6 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Check required columns
       const required = [MONTH_COL, AT_COL, FT_CRIT_COL, FT_NOCRIT_COL, NO_NOCRIT_COL, NO_CRIT_COL];
       const missing = required.filter(c => !headers.includes(c));
       if (missing.length) {
@@ -1378,49 +1314,28 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // 1. Cliente Select
-const clients = uniqSorted(data.map(r => r[CLIENTE_COL]));
-fillSelect("clienteSelect", clients, "Todos");
+      fillSelect("clienteSelect", uniqSorted(data.map(r => r[CLIENTE_COL])), "Todos");
+      fillSelect("compradorSelect", uniqSorted(data.map(r => r[COMPRADOR_COL])), "Todos");
+      fillSelect("clasificacionSelect", uniqSorted(data.map(r => r[CLASIFICACION_COL])), "Todos");
+      fillSelect("gcocSelect", uniqSorted(data.map(r => r[GC_OC_COL])), "Todos");
+      fillSelect("centroSelect", uniqSorted(data.map(r => r[CENTRO_COL])), "Todos");
+      fillSelect("proveedorSelect", uniqSorted(data.map(r => r[PROVEEDOR_COL])), "Todos");
 
-// 2. Comprador Select
-const buyers = uniqSorted(data.map(r => r[COMPRADOR_COL]));
-fillSelect("compradorSelect", buyers, "Todos");
+      renderComprasAbastecimiento();
+      applyAll();
 
-// 3. Clasificacion Select
-const clasifs = uniqSorted(data.map(r => r[CLASIFICACION_COL]));
-fillSelect("clasificacionSelect", clasifs, "Todos");
-
-// 4. Grupo Compra OC Select
-const ocs = uniqSorted(data.map(r => r[GC_OC_COL]));
-fillSelect("gcocSelect", ocs, "Todos");
-
-// 5. Centro Select (Nuevo)
-const centros = uniqSorted(data.map(r => r[CENTRO_COL]));
-fillSelect("centroSelect", centros, "Todos");
-
-// 6. Proveedor Select
-const provs = uniqSorted(data.map(r => r[PROVEEDOR_COL]));
-fillSelect("proveedorSelect", provs, "Todos");
-
-// Inicializar el nuevo checklist de Abastecimiento
-renderComprasAbastecimiento();
-applyAll();
-
-      // Hide Loader
       const loader = document.getElementById("loader");
       if (loader) loader.classList.add("hidden");
 
-      // Set up Event Listeners
- // Set up Event Listeners
       const elementsToListen = [
         "clienteSelect", "compradorSelect", "clasificacionSelect", 
         "gcocSelect", "centroSelect", "proveedorSelect", "comprasAbastecimientoSelect"
       ];
 
-     elementsToListen.forEach(id => {
+      elementsToListen.forEach(id => {
         document.getElementById(id)?.addEventListener("change", (e) => {
           enforceAllOption(e.target);
-          applyAll(true);
+          applyAll();
         });
       });
 
@@ -1434,56 +1349,25 @@ applyAll();
 
       document.getElementById("btnDownloadBase")?.addEventListener("click", () => {
         const rowsFilt = filteredRowsByAll();
-
-        if (!rowsFilt.length) {
-          alert("No hay registros para los filtros actuales.");
-          return;
-        }
-
-        const cols = headers.slice();
-        const comprador = safeFilePart(selLabel("compradorSelect"));
-        const cliente = safeFilePart(selLabel("clienteSelect"));
-        const mes = safeFilePart(selLabel("mesSelect"));
-        const filename = `BASE_COMPLETA_COMPRAS_${comprador}_${cliente}_${mes}.csv`;
-        
-        downloadCSV(filename, rowsFilt, cols);
+        if (!rowsFilt.length) { alert("No hay registros para los filtros actuales."); return; }
+        const filename = `BASE_COMPLETA_COMPRAS_${safeFilePart(selLabel("compradorSelect"))}_${safeFilePart(selLabel("clienteSelect"))}_${safeFilePart(selLabel("mesSelect"))}.csv`;
+        downloadCSV(filename, rowsFilt, headers);
       });
 
-    document.getElementById("btnDownloadNO")?.addEventListener("click", () => {
+      document.getElementById("btnDownloadNO")?.addEventListener("click", () => {
         const rowsFilt = filteredRowsByAll();
         const noRows = getNoEntregadosRows(rowsFilt);
-
-        if (!noRows.length) {
-          alert("No hay registros NO CUMPLIDOS para los filtros actuales.");
-          return;
-        }
-
-        const cols = headers.slice();
-        const comprador = safeFilePart(selLabel("compradorSelect"));
-        const cliente = safeFilePart(selLabel("clienteSelect"));
-        const mes = safeFilePart(selLabel("mesSelect"));
-        const filename = `NO_CUMPLIDOS_COMPRAS_${comprador}_${cliente}_${mes}.csv`;
-        
-        downloadCSV(filename, noRows, cols);
+        if (!noRows.length) { alert("No hay registros NO CUMPLIDOS para los filtros actuales."); return; }
+        const filename = `NO_CUMPLIDOS_COMPRAS_${safeFilePart(selLabel("compradorSelect"))}_${safeFilePart(selLabel("clienteSelect"))}_${safeFilePart(selLabel("mesSelect"))}.csv`;
+        downloadCSV(filename, noRows, headers);
       });
 
-      // NUEVO ESCUCHADOR PARA EL BOTÓN AGREGADO
       document.getElementById("btnDownloadFT")?.addEventListener("click", () => {
         const rowsFilt = filteredRowsByAll();
         const ftRows = getFueraDeTerminoRows(rowsFilt);
-
-        if (!ftRows.length) {
-          alert("No hay registros FUERA DE TÉRMINO para los filtros actuales.");
-          return;
-        }
-
-        const cols = headers.slice();
-        const comprador = safeFilePart(selLabel("compradorSelect"));
-        const cliente = safeFilePart(selLabel("clienteSelect"));
-        const mes = safeFilePart(selLabel("mesSelect"));
-        const filename = `FUERA_DE_TERMINO_COMPRAS_${comprador}_${cliente}_${mes}.csv`;
-        
-        downloadCSV(filename, ftRows, cols);
+        if (!ftRows.length) { alert("No hay registros FUERA DE TÉRMINO para los filtros actuales."); return; }
+        const filename = `FUERA_DE_TERMINO_COMPRAS_${safeFilePart(selLabel("compradorSelect"))}_${safeFilePart(selLabel("clienteSelect"))}_${safeFilePart(selLabel("mesSelect"))}.csv`;
+        downloadCSV(filename, ftRows, headers);
       });
 
       setHTML("msg", "");
@@ -1497,3 +1381,9 @@ applyAll();
       if (loader && !loader.classList.contains("hidden")) loader.classList.add("hidden");
     });
 });
+
+// Listener global unificado de resize
+window.addEventListener("resize", () => {
+  if (chartMes) chartMes.resize();
+  if (chartTendencia) chartTendencia.resize();
+}, { passive: true });
