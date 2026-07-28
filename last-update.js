@@ -1,7 +1,7 @@
 /* ===== CONFIGURACIÓN GLOBAL Y CACHÉ ===== */
 
 // 1. Fecha visible en la app
-window.FECHA_ULTIMA_ACTUALIZACION = "20/07/2026";   //CAMBIAR FECHA
+window.FECHA_ULTIMA_ACTUALIZACION = "27/07/2026";   //CAMBIAR FECHA
 
 // 2. Clave de versión global (Fallback seguro siempre)
 window.MI_CACHE_VERSION = window.FECHA_ULTIMA_ACTUALIZACION.replace(/\//g, "") || "20260722";   //CAMBIAR FECHA
