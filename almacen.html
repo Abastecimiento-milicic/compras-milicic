@@ -262,8 +262,8 @@
         <strong style="color: #334155; display: block; margin-bottom: 4px;">📌 Aclaración Importante sobre el Cumplimiento:</strong>
         Que un pedido figure como <strong>"NO CUMPLIDO"</strong> evalúa el indicador global del pedido y <em>no significa necesariamente que la demora sea responsabilidad de Almacén</em>. 
         <ul style="margin: 6px 0 0 20px; padding-left: 0; font-size: 0.9rem; color: #475569;">
-          <li><strong>Compras pendientes:</strong> Si el pedido no ha llegado a la sede, Almacén aún no puede iniciar el proceso de picking.</li>
-          <li><strong>Material en tránsito:</strong> En pedidos como ZPAS, si el material sigue en transporte, la métrica refleja el estado del flujo completo, no la gestión interna del almacén.</li>
+          <li><strong> Ej: Compras pendientes:</strong> Si el pedido no ha llegado a la sede, Almacén aún no puede iniciar el proceso de picking.</li>
+          <li><strong> Ej: Material en tránsito:</strong> En pedidos ZPAS, si el material sigue en transporte, la métrica refleja el estado del flujo completo, no la gestión interna del almacén.</li>
         </ul>
       </div>
 
@@ -282,7 +282,7 @@
       <div style="background-color: #fff7ed; padding: 12px; border-left: 4px solid #F26716; border-radius: 4px; margin: 16px 0;">
         <strong style="color: #c2410c; display: block; margin-bottom: 4px;">⏱️ Regla de Evaluación de Tiempos (ZPAN / ZPAI):</strong>
         <p style="margin: 0 0 8px 0; font-size: 0.92rem;">
-          Si el material llegó al almacén en término (antes o el mismo día de la <strong>Fecha de Entrega Esperada</strong>), la gestión del almacén <strong>no se evalúa negativamente</strong>, aunque el despacho posterior haya superado los días estándar.
+          Si el material llegó al almacén del cliente en término (antes o el mismo día de la <strong>Fecha de Entrega Esperada</strong>), la gestión del almacén <strong>se considera automáticamente CUMPLIDA</strong>. No se evalúan los tiempos internos de procesamiento de almacén ya que la fecha comprometida con el cliente se cumplió.
         </p>
         <p style="margin: 0 0 4px 0; font-size: 0.92rem;">
           Si el material <strong>no llegó en término</strong>, se evalúa el tiempo de procesamiento en almacén comparando la <strong>Fecha Cont. VL</strong> contra la <strong>Fecha Sello de Recepción</strong> bajo los siguientes plazos:
