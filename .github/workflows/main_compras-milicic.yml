@@ -1,0 +1,47 @@
+name: Build and deploy Node app to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      # 🚀 PASO AGREGADO: Comprime los CSVs a .gz manteniendo los originales
+      - name: Compress CSVs to GZIP
+        run: |
+          gzip -kf ALMACEN.csv
+          gzip -kf "R1 - REPORTE CUMPLIMIENTO COMPRAS ACUMULADO.csv"
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E592A31658DA4248BAB71C9FBFA68F15 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_85F7970A356745FCAFEF7199BA849CA5 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AD55620DAA8D49DC91E5E42A715470D0 }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: compras-milicic
+          slot-name: Production
+          package: .
