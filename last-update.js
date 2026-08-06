@@ -1,10 +1,11 @@
 /* ===== CONFIGURACIÓN GLOBAL Y CACHÉ ===== */
 
-// 1. Fecha visible en la app
-window.FECHA_ULTIMA_ACTUALIZACION = "03/08/2026";   //CAMBIAR FECHA
+// 1. Fecha visible en la app (puedes mantenerla o actualizarla)
+window.FECHA_ULTIMA_ACTUALIZACION = "06/08/2026"; // Actualiza a la fecha de tu reporte
 
-// 2. Clave de versión global (Fallback seguro siempre)
-window.MI_CACHE_VERSION = window.FECHA_ULTIMA_ACTUALIZACION.replace(/\//g, "") || "20260805";   //CAMBIAR FECHA
+// 2. Clave de versión dinámica (Genera un timestamp automático)
+// Esto fuerza al navegador a pedir los CSVs nuevos en cada carga
+window.MI_CACHE_VERSION = new Date().getTime().toString(); 
 
 // Dibuja la fecha automáticamente al cargar
 document.addEventListener("DOMContentLoaded", () => {
