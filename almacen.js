@@ -1,15 +1,17 @@
 /* ===== Cumplimiento de Almacén JS Logic ===== */
 
-// Cache Buster unificado
-const CACHE_BUSTER = window.MI_CACHE_VERSION;
+// Cache Buster dinámico: Si existe MI_CACHE_VERSION la usa, si no, genera un timestamp único
+const getCacheBuster = () => window.MI_CACHE_VERSION || new Date().getTime().toString();
 
 window.forceRefreshData = function() {
   console.log("[almacen] Wiping cache and refreshing...");
   sessionStorage.removeItem("mi_cache_buster");
+  localStorage.clear(); // Limpia también el almacenamiento local si hubiera copia guardada
+  
   if (typeof window.clearDataCache === "function") {
-    window.clearDataCache().finally(() => window.location.reload());
+    window.clearDataCache().finally(() => window.location.reload(true));
   } else {
-    window.location.reload();
+    window.location.reload(true);
   }
 };
 
