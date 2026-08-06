@@ -383,12 +383,6 @@ function updateKPIsMonthly(rows, months) {
 /* ============================
    CHARTS (ECHARTS ALMACÉN COMPLETO Y AJUSTADO)
    ============================ */
-/* ============================
-   CHART 1: GRÁFICO DE CUMPLIMIENTO ALMACÉN (AJUSTADO)
-   ============================ */
-/* ============================
-   CHART 1: GRÁFICO DE CUMPLIMIENTO ALMACÉN (PERFECCIONADO)
-   ============================ */
 function buildChartMes(rows) {
   const agg = new Map();
   const monthsSet = new Set();
@@ -442,7 +436,6 @@ function buildChartMes(rows) {
   const labelMonths = months.map(formatMonthKey);
 
   const option = {
-    // 🚀 Aumentamos el top a 85px para dar espacio a los carteles superiores
     grid: { left: 55, right: 65, top: 85, bottom: 70 },
     tooltip: {
       trigger: "axis",
@@ -605,7 +598,6 @@ function buildChartMes(rows) {
         itemStyle: { color: COLORS.purple, borderColor: "#fff", borderWidth: 1.5 },
         label: {
           show: true,
-          // 🚀 SE MUEVE ABAJO Y CON MAYOR DISTANCIA PARA NO TAPAR LAS BARRAS
           position: "bottom",
           distance: 12,
           backgroundColor: "#ffffff",
@@ -690,6 +682,7 @@ function buildChartMes(rows) {
 
   chartMes.setOption(option, true);
 }
+
 /* ============================
    CHART 2: TENDENCIA HISTÓRICA
    ============================ */
@@ -846,74 +839,97 @@ function applyAll() {
 }
 
 /* ============================
-   INIT Y CARGA RÁPIDA CON CACHÉ
+   INIT Y CARGA RÁPIDA DESDE CSV LOCAL
    ============================ */
 window.addEventListener("DOMContentLoaded", () => {
-  async function loadFromSupabase() {
-    console.log("[almacen] Cargando datos desde Supabase (tabla ALMACEN)...");
+  async function loadFromCSV() {
+    console.log("[almacen] Cargando datos desde ALMACEN.csv...");
     try {
-      const dbData = await window.fetchTableFromSupabase('ALMACEN');
+      const cacheUrl = `${csvUrl}?v=${getCacheBuster()}`;
+      const response = await fetch(cacheUrl);
 
-      if (!dbData.length) {
-        showError("La tabla ALMACEN en Supabase está vacía o no se pudo leer.");
+      if (!response.ok) {
+        showError(`No se pudo cargar el archivo ${csvUrl} (Status: ${response.status})`);
         return;
       }
 
-      const parsedHeaders = Object.keys(dbData[0]);
-      const parsedData = dbData.map(row => {
-        const o = {};
-        parsedHeaders.forEach(h => {
-          o[h] = clean(row[h]);
+      const csvText = await response.text();
+
+      // Si PapaParse está disponible en el proyecto
+      if (window.Papa) {
+        Papa.parse(csvText, {
+          header: true,
+          delimiter: DELIM,
+          skipEmptyLines: true,
+          complete: (results) => {
+            headers = results.meta.fields || [];
+            data = results.data.map(row => {
+              const o = {};
+              headers.forEach(h => { o[h] = clean(row[h]); });
+              return o;
+            });
+            initDashboard();
+          }
         });
-        return o;
-      });
-
-      data = parsedData;
-      headers = parsedHeaders;
-
-      fillSelect("clienteSelect", uniqSorted(data.map(r => r[CLIENTE_COL])));
-      fillSelect("clasificacionSelect", uniqSorted(data.map(r => r[CLASIFICACION_COL])));
-      fillSelect("claseDocSelect", uniqSorted(data.map(r => r[CLASE_DOC_COL])));
-
-      applyAll();
-
-      const loader = document.getElementById("loader");
-      if (loader) loader.classList.add("hidden");
-
-      ["clienteSelect", "clasificacionSelect", "claseDocSelect", "almacenSelect"].forEach(id => {
-        document.getElementById(id)?.addEventListener("change", () => applyAll());
-      });
-
-      document.getElementById("mesSelect")?.addEventListener("change", () => {
-        updateMesTitleFromSelect();
-        const rows = filteredRowsNoMes();
-        const months = [...new Set(rows.map(r => clean(r[MONTH_COL])).filter(Boolean))].sort();
-        updateKPIsMonthly(rows, months);
-      });
-
-      document.getElementById("btnDownloadBase")?.addEventListener("click", () => {
-        downloadCSV("BASE_COMPLETA_ALMACEN.csv", filteredRowsByAll(), headers);
-      });
-
-      document.getElementById("btnDownloadNO")?.addEventListener("click", () => {
-        const rows = filteredRowsByAll().filter(r => toNumber(r["NO CUMPLIDO ALMACEN"]) > 0);
-        downloadCSV("NO_CUMPLIDOS_ALMACEN.csv", rows, headers);
-      });
-
-      document.getElementById("btnDownloadFT")?.addEventListener("click", () => {
-        const rows = filteredRowsByAll().filter(r => toNumber(r["CUMPLIDO FT"]) > 0);
-        downloadCSV("FUERA_TERMINO_ALMACEN.csv", rows, headers);
-      });
+      } else {
+        // Fallback propio para parsear CSV si no estuviera PapaParse
+        const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== "");
+        if (!lines.length) {
+          showError("El archivo ALMACEN.csv está vacío.");
+          return;
+        }
+        headers = lines[0].split(DELIM).map(clean);
+        data = lines.slice(1).map(line => {
+          const values = line.split(DELIM);
+          const o = {};
+          headers.forEach((h, i) => { o[h] = clean(values[i]); });
+          return o;
+        });
+        initDashboard();
+      }
     } catch (err) {
       console.error(err);
-      showError("Error cargando datos de Almacén desde Supabase: " + (err?.message || err));
-    } finally {
-      const loader = document.getElementById("loader");
-      if (loader && !loader.classList.contains("hidden")) loader.classList.add("hidden");
+      showError("Error cargando el archivo ALMACEN.csv: " + (err?.message || err));
     }
   }
 
-  loadFromSupabase();
+  function initDashboard() {
+    fillSelect("clienteSelect", uniqSorted(data.map(r => r[CLIENTE_COL])));
+    fillSelect("clasificacionSelect", uniqSorted(data.map(r => r[CLASIFICACION_COL])));
+    fillSelect("claseDocSelect", uniqSorted(data.map(r => r[CLASE_DOC_COL])));
+
+    applyAll();
+
+    const loader = document.getElementById("loader");
+    if (loader) loader.classList.add("hidden");
+
+    ["clienteSelect", "clasificacionSelect", "claseDocSelect", "almacenSelect"].forEach(id => {
+      document.getElementById(id)?.addEventListener("change", () => applyAll());
+    });
+
+    document.getElementById("mesSelect")?.addEventListener("change", () => {
+      updateMesTitleFromSelect();
+      const rows = filteredRowsNoMes();
+      const months = [...new Set(rows.map(r => clean(r[MONTH_COL])).filter(Boolean))].sort();
+      updateKPIsMonthly(rows, months);
+    });
+
+    document.getElementById("btnDownloadBase")?.addEventListener("click", () => {
+      downloadCSV("BASE_COMPLETA_ALMACEN.csv", filteredRowsByAll(), headers);
+    });
+
+    document.getElementById("btnDownloadNO")?.addEventListener("click", () => {
+      const rows = filteredRowsByAll().filter(r => toNumber(r["NO CUMPLIDO ALMACEN"]) > 0);
+      downloadCSV("NO_CUMPLIDOS_ALMACEN.csv", rows, headers);
+    });
+
+    document.getElementById("btnDownloadFT")?.addEventListener("click", () => {
+      const rows = filteredRowsByAll().filter(r => toNumber(r["CUMPLIDO FT"]) > 0);
+      downloadCSV("FUERA_TERMINO_ALMACEN.csv", rows, headers);
+    });
+  }
+
+  loadFromCSV();
 });
 
 window.addEventListener("resize", () => {
