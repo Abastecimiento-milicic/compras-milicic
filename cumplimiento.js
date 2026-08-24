@@ -335,6 +335,11 @@
     const cents = getSelValues("centroSelect");
     if (cents.length && CENTRO_COL) rows = rows.filter(r => cents.includes(clean(r[CENTRO_COL])));
     
+    const cb = document.getElementById("cumpl_soloComprasCb");
+    if (cb && cb.checked) {
+      rows = rows.filter(r => clean(r["SOLO COMPRAS ABASTECIMIENTO"]) === "1");
+    }
+    
     return rows;
   }
 
@@ -1327,6 +1332,9 @@
       btnAlt.classList.remove("btn-active");
     }
 
+    const cb = document.getElementById("cumpl_soloComprasCb");
+    if (cb) cb.checked = false;
+
     updateMesTitleFromSelect();
     applyAll();
   }
@@ -1499,6 +1507,9 @@
           const months = [...new Set(rows.map(getMonthKeyFromRow).filter(Boolean))].sort();
           updateKPIsMonthly(rows, months);
           updateIncompletosCount();
+        });
+        document.getElementById("cumpl_soloComprasCb")?.addEventListener("change", () => {
+          applyAll();
         });
 
         document.getElementById("cumpl_btnDownloadNO")?.addEventListener("click", () => {
