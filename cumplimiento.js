@@ -335,9 +335,12 @@
     const cents = getSelValues("centroSelect");
     if (cents.length && CENTRO_COL) rows = rows.filter(r => cents.includes(clean(r[CENTRO_COL])));
     
-    const cb = document.getElementById("cumpl_soloComprasCb");
-    if (cb && cb.checked) {
-      rows = rows.filter(r => clean(r["SOLO COMPRAS ABASTECIMIENTO"]) === "1");
+    const solo = getSelValues("cumpl_soloComprasSelect");
+    if (solo.length && !solo.includes("__ALL__") && solo.length < 2) {
+      rows = rows.filter(r => {
+        const val = clean(r["SOLO COMPRAS ABASTECIMIENTO"]) === "1" ? "1" : "0";
+        return solo.includes(val);
+      });
     }
     
     return rows;
@@ -1312,7 +1315,7 @@
   }
 
   function clearAllFilters() {
-    const selects = ["cumpl_clienteSelect", "cumpl_clasif2Select", "cumpl_gcocSelect", "cumpl_mesSelect", "centroSelect"];
+    const selects = ["cumpl_clienteSelect", "cumpl_clasif2Select", "cumpl_gcocSelect", "cumpl_mesSelect", "centroSelect", "cumpl_soloComprasSelect"];
     selects.forEach(id => {
       const sel = document.getElementById(id);
       if (!sel) return;
@@ -1331,9 +1334,6 @@
       btnAlt.textContent = "Medir cumplimiento arriba";
       btnAlt.classList.remove("btn-active");
     }
-
-    const cb = document.getElementById("cumpl_soloComprasCb");
-    if (cb) cb.checked = false;
 
     updateMesTitleFromSelect();
     applyAll();
@@ -1508,7 +1508,8 @@
           updateKPIsMonthly(rows, months);
           updateIncompletosCount();
         });
-        document.getElementById("cumpl_soloComprasCb")?.addEventListener("change", () => {
+        document.getElementById("cumpl_soloComprasSelect")?.addEventListener("change", (e) => {
+          enforceAllOption(e.target);
           applyAll();
         });
 

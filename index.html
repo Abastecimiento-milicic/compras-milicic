@@ -143,14 +143,18 @@
             <div id="centroHint" class="hint">Columna: -</div>
           </div>
 
-          <div class="filter" style="align-self: stretch; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px;">
-            <div style="width: 100%; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-              <input type="checkbox" id="cumpl_soloComprasCb" style="transform: scale(1.2); cursor: pointer;" />
-              <label for="cumpl_soloComprasCb" style="cursor: pointer; margin-bottom: 0; font-weight: 600; font-size: 0.75rem; line-height: 1.1; display: inline-block;">SOLO COMPRAS<br>ABASTECIMIENTO</label>
-            </div>
+          <div class="filter" style="align-self: stretch; display: flex; flex-direction: column;">
+            <label style="width: 100%; box-sizing: border-box;">SOLO COMPRAS ABASTECIMIENTO</label>
+            <select id="cumpl_soloComprasSelect" multiple size="3" class="multi-select" style="min-height: 0; height: auto; flex-grow: 0; margin-bottom: 8px;">
+              <option value="">Todos</option>
+              <option value="1">SI</option>
+              <option value="0">NO</option>
+            </select>
+            <div id="cumpl_soloComprasHint" class="hint">Columna: SOLO COMPRAS ABASTECIMIENTO</div>
+            
             <!-- Botón Descargar NO entregados -->
-            <div style="width: 100%;">
-              <button id="cumpl_btnDownloadNO" class="btn" style="font-size: 0.8rem; padding: 0.5rem 0.75rem;">
+            <div style="width: 100%; margin-top: auto;">
+              <button id="cumpl_btnDownloadNO" class="btn" style="font-size: 0.8rem; padding: 0.5rem 0.75rem; width: 100%;">
                 ⬇ Descargar NO entregados
               </button>
               <div class="hint">Exporta CSV con “;”</div>
