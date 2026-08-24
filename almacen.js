@@ -45,6 +45,11 @@ const DELIM = ";";
 
 const MONTH_COL = "Mes-Año";
 const DEMORA_COL = "DIAS DE DEMORA";
+const FECHA_COL = "FECHA ENTREGA ESPERADA";
+
+let AT_COL = "CUMPLIDO AT";
+let FT_COL = "CUMPLIDO FT";
+let NO_COL = "NO CUMPLIDO ALMACEN";
 
 const CLIENTE_COL = "CLIENTE";
 const CLASIFICACION_COL = "CLASIFICACION";
@@ -56,14 +61,15 @@ const TARGET_OBJ = 78; // Objetivo Almacén: 78%
 /* ============================
    COLORES (TEMA ALMACÉN - NARANJA)
    ============================ */
-const COLORS = {
-  green: "#10b981",       
-  amber: "#f59e0b",  
-  red: "#ef4444",    
-  purple: "#8b5cf6",      
-  orange_brand: "#F26716",  
-  blue: "#0284c7"
-};
+  const COLORS = {
+    blue: "#3b82f6",
+    green: "#10b981",
+    amber: "#f59e0b",
+    red: "#ef4444",
+    grid: "rgba(15, 23, 42, 0.10)",
+    text: "#0f172a",
+    muted: "#64748b",
+  };
 
 let data = [];
 let headers = [];
@@ -359,14 +365,64 @@ function updateKPIsGeneral(rows) {
   if (elDemG) elDemG.style.color = (!isNaN(avgG) && avgG > 7) ? "#ef4444" : "#10b981";
 }
 
+function deltaInfo(curr, prev) {
+  if (isNaN(curr) || isNaN(prev)) return { text: "-", diff: 0 };
+  const diff = curr - prev;
+  const sign = diff > 0 ? "▲" : diff < 0 ? "▼" : "=";
+  const pct = Math.abs(diff * 100).toFixed(1).replace(".", ",") + "%";
+  return { text: `${sign} ${pct} vs mes anterior`, diff };
+}
+
+function setDelta(el, text, cls) {
+  if (!el) return;
+  el.textContent = text;
+  el.className = "kpi-sub kpi-sub-strong " + cls;
+}
+
 function updateKPIsMonthly(rows, months) {
+  const ms = getSelValues("mesSelect");
+  if (!ms.length) {
+    const t = calcTotals(rows);
+    const pctAT = t.total ? t.at / t.total : NaN;
+    const pctFT = t.total ? t.ft / t.total : NaN;
+    const pctNO = t.total ? t.no / t.total : NaN;
+
+    setText("kpiTotalMes", fmtInt(t.total));
+
+    setText("kpiATmes", fmtPct01(pctAT));
+    const elATmes = document.getElementById("kpiATmes");
+    if (elATmes) elATmes.style.color = (isFinite(pctAT) && pctAT >= (TARGET_OBJ / 100)) ? "#10b981" : "#ef4444";
+
+    setText("kpiFTmes", fmtPct01(pctFT));
+    setText("kpiNOmes", fmtPct01(pctNO));
+
+    const avgM = avgDelay(rows);
+    setText("kpiDemoraMes", isNaN(avgM) ? "-" : (Math.round(avgM) + " d"));
+    const elDemM = document.getElementById("kpiDemoraMes");
+    if (elDemM) elDemM.style.color = (!isNaN(avgM) && avgM > 7) ? "#ef4444" : "#10b981";
+
+    const atSub = document.getElementById("kpiATmesSub");
+    const ftSub = document.getElementById("kpiFTmesSub");
+    const noSub = document.getElementById("kpiNOmesSub");
+
+    if (atSub) setDelta(atSub, `Cant: ${fmtInt(t.at)} · Todos los meses`, "delta-neutral");
+    if (ftSub) setDelta(ftSub, `Cant: ${fmtInt(t.ft)} · Todos los meses`, "delta-neutral");
+    if (noSub) setDelta(noSub, `Cant: ${fmtInt(t.no)} · Todos los meses`, "delta-neutral");
+    return;
+  }
+
   const mes = getSingleMes(months);
   if (!mes) return;
 
+  const idx = months.indexOf(mes);
+  const prevMes = idx > 0 ? months[idx - 1] : null;
+
   const cur = calcMonthTotals(rows, mes);
+  const prev = prevMes ? calcMonthTotals(rows, prevMes) : null;
+
   setText("kpiTotalMes", fmtInt(cur.total));
+
   setText("kpiATmes", fmtPct01(cur.pctAT));
-  
   const elATmes = document.getElementById("kpiATmes");
   if (elATmes) elATmes.style.color = (isFinite(cur.pctAT) && cur.pctAT >= (TARGET_OBJ / 100)) ? "#10b981" : "#ef4444";
 
@@ -378,436 +434,733 @@ function updateKPIsMonthly(rows, months) {
   setText("kpiDemoraMes", isNaN(avgM) ? "-" : (Math.round(avgM) + " d"));
   const elDemM = document.getElementById("kpiDemoraMes");
   if (elDemM) elDemM.style.color = (!isNaN(avgM) && avgM > 7) ? "#ef4444" : "#10b981";
+
+  const atSub = document.getElementById("kpiATmesSub");
+  const ftSub = document.getElementById("kpiFTmesSub");
+  const noSub = document.getElementById("kpiNOmesSub");
+
+  if (!prev) {
+    setDelta(atSub, `Cant: ${fmtInt(cur.at)} · Sin mes anterior`, "delta-neutral");
+    setDelta(ftSub, `Cant: ${fmtInt(cur.ft)} · Sin mes anterior`, "delta-neutral");
+    setDelta(noSub, `Cant: ${fmtInt(cur.no)} · Sin mes anterior`, "delta-neutral");
+    return;
+  }
+
+  const dAT = deltaInfo(cur.pctAT, prev.pctAT);
+  const dFT = deltaInfo(cur.pctFT, prev.pctFT);
+  const dNO = deltaInfo(cur.pctNO, prev.pctNO);
+
+  let clsAT = "delta-good";
+  if (dAT.diff < 0) clsAT = "delta-bad";
+
+  let clsFT = "delta-bad";
+  if (dFT.diff < 0) clsFT = "delta-good";
+
+  let clsNO = "delta-good";
+  if (dNO.diff > 0) clsNO = "delta-bad";
+
+  setDelta(atSub, `Cant: ${fmtInt(cur.at)} · ${dAT.text}`, clsAT);
+  setDelta(ftSub, `Cant: ${fmtInt(cur.ft)} · ${dFT.text}`, clsFT);
+  setDelta(noSub, `Cant: ${fmtInt(cur.no)} · ${dNO.text}`, clsNO);
 }
 
 /* ============================
    CHARTS (ECHARTS ALMACÉN COMPLETO Y AJUSTADO)
    ============================ */
+
+
+  function parseDateAny(s) {
+    const t = clean(s);
+    if (!t) return null;
+
+    let m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+
+    m = t.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+
+    return null;
+  }
+
+  function monthKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  function getMonthKeyFromRow(r) {
+    const d = parseDateAny(r[FECHA_COL]);
+    return d ? monthKey(d) : null;
+  }
+
 function buildChartMes(rows) {
-  const agg = new Map();
-  const monthsSet = new Set();
+    const agg = new Map();
+    const monthsSet = new Set();
 
-  for (const r of rows) {
-    const mk = clean(r[MONTH_COL]);
-    if (!mk) continue;
-    monthsSet.add(mk);
+    for (const r of rows) {
+      const d = parseDateAny(r[FECHA_COL]);
+      if (!d) continue;
 
-    if (!agg.has(mk)) {
-      agg.set(mk, { at: 0, ft: 0, no: 0, demSum: 0, demCnt: 0 });
+      const mk = monthKey(d);
+      monthsSet.add(mk);
+
+      if (!agg.has(mk)) agg.set(mk, { at: 0, ft: 0, no: 0, comp: 0, demSum: 0, demCnt: 0 });
+      const c = agg.get(mk);
+
+      let rAt = toNumber(r[AT_COL]);
+      let rFt = toNumber(r[FT_COL]);
+      let rNo = toNumber(r[NO_COL]);
+
+      c.at += rAt;
+      c.ft += rFt;
+      c.no += rNo;
+      c.comp += toNumber(r["COMPROMETIDOS"]) || (rAt + rFt + rNo);
+
+      const dem = toNumAny(r[DEMORA_COL]);
+      if (!isNaN(dem)) { c.demSum += dem; c.demCnt += 1; }
     }
-    const c = agg.get(mk);
-    c.at += toNumber(r["CUMPLIDO AT"]);
-    c.ft += toNumber(r["CUMPLIDO FT"]);
-    c.no += toNumber(r["NO CUMPLIDO ALMACEN"]);
 
-    const dem = toNumAny(r[DEMORA_COL]);
-    if (!isNaN(dem)) { c.demSum += dem; c.demCnt += 1; }
-  }
+    const months = [...monthsSet].sort();
+    const qAT = months.map(m => agg.get(m)?.at ?? 0);
+    const qFT = months.map(m => agg.get(m)?.ft ?? 0);
+    const qNO = months.map(m => agg.get(m)?.no ?? 0);
 
-  const months = [...monthsSet].sort();
-  const qAT = months.map(m => agg.get(m)?.at ?? 0);
-  const qFT = months.map(m => agg.get(m)?.ft ?? 0);
-  const qNO = months.map(m => agg.get(m)?.no ?? 0);
+    const pAT = qAT.map((v, i) => { const t = qAT[i] + qFT[i] + qNO[i]; return t ? (v / t) * 100 : 0; });
+    const pFT = qFT.map((v, i) => { const t = qAT[i] + qFT[i] + qNO[i]; return t ? (v / t) * 100 : 0; });
+    const pNO = qNO.map((v, i) => { const t = qAT[i] + qFT[i] + qNO[i]; return t ? (v / t) * 100 : 0; });
 
-  const totals = months.map((_, i) => qAT[i] + qFT[i] + qNO[i]);
+    const avgDem = months.map(m => {
+      const c = agg.get(m);
+      return (c && c.demCnt) ? (c.demSum / c.demCnt) : null;
+    });
 
-  const pAT = months.map((_, i) => totals[i] ? (qAT[i] / totals[i]) * 100 : 0);
-  const pFT = months.map((_, i) => totals[i] ? (qFT[i] / totals[i]) * 100 : 0);
-  const pNO = months.map((_, i) => totals[i] ? (qNO[i] / totals[i]) * 100 : 0);
+    const pAT_acum = [];
+    let sumaEntregadosATAcum = 0;
+    let sumaComprometidosAcum = 0;
 
-  // Línea Violeta: % AT Acumulado
-  const pAT_acum = [];
-  let cumAT = 0, cumTotal = 0;
-  for (let i = 0; i < months.length; i++) {
-    cumAT += qAT[i];
-    cumTotal += totals[i];
-    pAT_acum.push(cumTotal ? (cumAT / cumTotal) * 100 : 0);
-  }
+    for (let i = 0; i < months.length; i++) {
+      const c = agg.get(months[i]);
+      sumaEntregadosATAcum += (c?.at ?? 0);
+      sumaComprometidosAcum += (c?.comp ?? 0);
+      const pctAcum = sumaComprometidosAcum ? (sumaEntregadosATAcum / sumaComprometidosAcum) * 100 : 0;
+      pAT_acum.push(pctAcum);
+    }
 
-  const avgDem = months.map(m => {
-    const c = agg.get(m);
-    return (c && c.demCnt) ? (c.demSum / c.demCnt) : null;
-  });
+    const el = document.getElementById("chartMes");
+    if (!el || !window.echarts) return;
 
-  const el = document.getElementById("chartMes");
-  if (!el || !window.echarts) return;
-  if (!chartMes) chartMes = echarts.init(el, null, { renderer: "canvas" });
+    if (!chartMes) chartMes = echarts.init(el, null, { renderer: "canvas" });
 
-  const labelMonths = months.map(formatMonthKey);
+    const lineSegments = [];
 
-  const option = {
-    grid: { left: 55, right: 65, top: 85, bottom: 70 },
-    tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "shadow" },
-      confine: true,
-      formatter: (params) => {
-        const idx = params?.[0]?.dataIndex ?? 0;
-        const rawM = months[idx] ?? "";
-        let html = `<b>${rawM.toUpperCase()} (Total: ${fmtInt(totals[idx])})</b><br/>`;
+    if (months.length === 1) {
+      const anoActual = parseInt(months[0].substring(0, 4), 10);
+      const hActual = (anoActual >= 2026) ? 78 : 75;
+      lineSegments.push({
+        yAxis: hActual,
+        label: {
+          show: true,
+          formatter: `Obj ${hActual}%`,
+          fontWeight: 800,
+          fontSize: 11,
+          position: "end",
+          backgroundColor: '#374151',
+          color: '#fff',
+          padding: [4, 6],
+          borderRadius: 4
+        }
+      });
+    } else {
+      for (let i = 0; i < months.length - 1; i++) {
+        const anoActual = parseInt(months[i].substring(0, 4), 10);
+        const hActual = (anoActual >= 2026) ? 78 : 75;
         
-        const byName = Object.fromEntries(params.map(p => [p.seriesName, p]));
-        const at = byName["Entregados AT"];
-        const ft = byName["Entregados FT"];
-        const no = byName["No entregados"];
-        const cum = byName["%AT Acumulado"];
-        const dem = byName["Promedio días de demora"];
+        const isLastSegment = (i === months.length - 2);
 
-        if (at) html += `${at.marker} Entregados AT: <b>${fmtInt(qAT[idx])}</b> (${_fmtNum1(at.value)}%)<br/>`;
-        if (ft) html += `${ft.marker} Entregados FT: <b>${fmtInt(qFT[idx])}</b> (${_fmtNum1(ft.value)}%)<br/>`;
-        if (no) html += `${no.marker} No entregados: <b>${fmtInt(qNO[idx])}</b> (${_fmtNum1(no.value)}%)<br/>`;
-        if (cum) html += `${cum.marker} <span style="color:#8b5cf6;">%AT Acumulado: <b>${_fmtNum1(cum.value)}%</b></span><br/>`;
-        if (dem && dem.value != null) html += `${dem.marker} <span style="color:#0284c7;">Demora prom.: <b>${_fmtNum1(dem.value)}</b> d</span><br/>`;
-        return html;
-      }
-    },
-    legend: {
-      bottom: 0,
-      left: "center",
-      itemWidth: 14,
-      itemHeight: 10,
-      textStyle: { fontWeight: 700, fontSize: 11 },
-      data: ["Entregados AT", "Entregados FT", "No entregados", "%AT Acumulado", "Promedio días de demora"]
-    },
-    xAxis: {
-      type: "category",
-      data: labelMonths,
-      axisLabel: { fontWeight: 800, fontSize: 11, color: "#334155" }
-    },
-    yAxis: [
-      {
-        type: "value",
-        min: 0,
-        max: 100,
-        interval: 20,
-        axisLabel: { formatter: "{value}%", fontWeight: 700, fontSize: 11 },
-        splitLine: { lineStyle: { color: "rgba(15,23,42,0.06)" } }
-      },
-      {
-        type: "value",
-        name: "Días de demora",
-        nameTextStyle: { fontWeight: 700, fontSize: 11, color: "#64748b", padding: [0, 0, 15, 0] },
-        position: "right",
-        min: 0,
-        max: 25,
-        interval: 5,
-        axisLabel: { fontWeight: 700, fontSize: 11 },
-        splitLine: { show: false }
-      }
-    ],
-    series: [
-      {
-        name: "Entregados AT",
-        type: "bar",
-        stack: "pct",
-        data: pAT.map((v, idx) => {
-          const val = +(v).toFixed(2);
-          const q = qAT[idx];
-          const pct = Math.round(v);
-          if (v < TARGET_OBJ) {
-            return {
-              value: val,
-              itemStyle: { borderColor: "#ef4444", borderWidth: 2, borderType: "solid" },
-              label: {
+        const anoSig = parseInt(months[i + 1].substring(0, 4), 10);
+        const hSig = (anoSig >= 2026) ? 78 : 75;
+
+        const showLabelOnHorizontal = isLastSegment && (hActual === hSig);
+
+        lineSegments.push([
+          { 
+            xAxis: i, 
+            yAxis: hActual, 
+            label: showLabelOnHorizontal ? {
+              show: true,
+              formatter: `Obj ${hSig}%`,
+              fontWeight: 800,
+              fontSize: 11,
+              position: "end",
+              offset: [35, 0],
+              backgroundColor: '#374151',
+              color: '#fff',
+              padding: [4, 6],
+              borderRadius: 4
+            } : { show: false }
+          },
+          { 
+            xAxis: i + 1, 
+            yAxis: hActual
+          }
+        ]);
+
+        if (hActual !== hSig) {
+          const showLabelOnVertical = isLastSegment;
+          
+          lineSegments.push([
+            { 
+              xAxis: i + 1, 
+              yAxis: hActual, 
+              label: showLabelOnVertical ? {
                 show: true,
-                position: "inside",
-                backgroundColor: "#ffffff",
-                borderColor: "#ef4444",
+                formatter: `Obj ${hSig}%`,
+                fontWeight: 800,
+                fontSize: 11,
+                position: "end",
+                offset: [35, 0],
+                backgroundColor: '#374151',
+                color: '#fff',
+                padding: [4, 6],
+                borderRadius: 4
+              } : { show: false }
+            },
+            { 
+              xAxis: i + 1, 
+              yAxis: hSig
+            }
+          ]);
+        }
+      }
+    }
+
+    const option = {
+      animation: true,
+      animationDuration: 800,
+      animationDurationUpdate: 600,
+      animationEasing: "cubicOut",
+      animationEasingUpdate: "cubicOut",
+      grid: { left: 56, right: 70, top: 40, bottom: 62 },
+      tooltip: {
+        trigger: "axis",
+        axisPointer: { type: "shadow" },
+        confine: true,
+        backgroundColor: "transparent",
+        borderColor: "transparent",
+        shadowColor: "transparent",
+        shadowBlur: 0,
+        borderWidth: 0,
+        padding: 0,
+        formatter: (params) => {
+          const axis = params?.[0]?.axisValue ?? "";
+          const byName = Object.fromEntries(params.map(p => [p.seriesName, p]));
+          const at = byName["Entregados AT"];
+          const ft = byName["Entregados FT"];
+          const ne = byName["No entregados"];
+          const acum = byName["%AT Acumulado"];
+          const dem = byName["Promedio días de demora"];
+
+          let html = `
+            <div style="font-family: var(--font-body), sans-serif; padding: 10px 14px; min-width: 190px; background: #ffffff; border-radius: 8px; box-shadow: var(--shadow-xl); border: 1.5px solid var(--border-light); color: var(--text-main);">
+              <div style="font-family: var(--font-main), sans-serif; font-weight: 800; font-size: 0.9rem; margin-bottom: 8px; border-bottom: 1.5px solid var(--border-light); padding-bottom: 6px; color: var(--text-main); letter-spacing: 0.02em;">
+                📅 ${axis}
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+          `;
+
+          if (at) {
+            html += `
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; gap: 15px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-muted);">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+                  A Tiempo
+                </span>
+                <span style="font-weight: 800; color: var(--text-main);">${fmtInt(qAT[at.dataIndex])} <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">(${_fmtNum1(at.value)}%)</span></span>
+              </div>
+            `;
+          }
+          if (ft) {
+            html += `
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; gap: 15px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-muted);">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b;"></span>
+                  Fuera Tiempo
+                </span>
+                <span style="font-weight: 800; color: var(--text-main);">${fmtInt(qFT[ft.dataIndex])} <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">(${_fmtNum1(ft.value)}%)</span></span>
+              </div>
+            `;
+          }
+          if (ne) {
+            html += `
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; gap: 15px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-muted);">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span>
+                  No Entregados
+                </span>
+                <span style="font-weight: 800; color: #ef4444;">${fmtInt(qNO[ne.dataIndex])} <span style="font-size: 0.75rem; color: #ef4444; font-weight: 600;">(${_fmtNum1(ne.value)}%)</span></span>
+              </div>
+            `;
+          }
+          if (acum) {
+            html += `
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; border-top: 1.5px solid var(--border-light); padding-top: 6px; margin-top: 2px; gap: 15px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-muted);">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #7c3aed;"></span>
+                  % AT Acum.
+                </span>
+                <span style="font-weight: 800; color: #7c3aed;">${_fmtNum1(acum.value)}%</span>
+              </div>
+            `;
+          }
+          if (dem && dem.value != null && !isNaN(dem.value)) {
+            html += `
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; border-top: 1.5px solid var(--border-light); padding-top: 6px; margin-top: 2px; gap: 15px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-muted);">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #3b82f6;"></span>
+                  Demora Prom.
+                </span>
+                <span style="font-weight: 800; color: #2563eb;">${Math.round(dem.value)} días</span>
+              </div>
+            `;
+          }
+
+          html += `
+              </div>
+            </div>
+          `;
+          return html;
+        }
+      },
+      legend: {
+        bottom: 12,
+        left: "center",
+        itemWidth: 14,
+        itemHeight: 10,
+        textStyle: { fontWeight: 800 }
+      },
+      xAxis: {
+        type: "category",
+        data: months,
+        axisTick: { alignWithLabel: true },
+        axisLabel: { fontWeight: 700 }
+      },
+      yAxis: [
+        {
+          type: "value",
+          min: 0,
+          max: 100,
+          axisLabel: { formatter: "{value}%" },
+          splitLine: { lineStyle: { color: "rgba(15,23,42,0.10)" } }
+        },
+        {
+          type: "value",
+          name: "Días de demora",
+          position: "right",
+          axisLabel: { fontWeight: 700 },
+          splitLine: { show: false },
+          boundaryGap: [0, '25%']
+        }
+      ],
+      series: [
+        {
+          name: "Entregados AT",
+          type: "bar",
+          stack: "pct",
+          data: pAT.map(v => {
+            const val = +(+v).toFixed(4);
+            if (val < 78) {
+              return {
+                value: val,
+                itemStyle: {
+                  borderColor: '#dc2626',
+                  borderWidth: 2,
+                  borderType: 'solid',
+                  borderRadius: [6, 6, 0, 0]
+                }
+              };
+            }
+            return val;
+          }),
+          barMaxWidth: 52,
+          itemStyle: {
+            color: {
+              type: "linear",
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: "#10b981" },
+                { offset: 1, color: "#047857" }
+              ]
+            },
+            borderRadius: [6, 6, 0, 0]
+          },
+          label: {
+            show: true,
+            position: "insideBottom", 
+            distance: 10,
+            fontWeight: 900,
+            fontSize: 11,
+            lineHeight: 12,
+            formatter: (p) => {
+              const i = p.dataIndex;
+              const pct = +p.value || 0;
+              const q = (qAT)[i] || 0;
+              if (!q) return "";
+              if (pct < 6) return "";
+              const pctRound = Math.round(pct);
+              if (pct < 78) return `{warn|${fmtInt(q)}\n⚠ (${pctRound}%)}`;
+              return `${fmtInt(q)}\n(${pctRound}%)`;
+            },
+            rich: {
+              warn: {
+                fontWeight: 950,
+                color: "#7f1d1d",
+                backgroundColor: "rgba(254, 202, 202, 0.9)",
+                borderColor: "#b91c1c",
                 borderWidth: 1.5,
                 borderRadius: 4,
                 padding: [2, 4],
-                color: "#b91c1c",
-                fontWeight: 900,
-                fontSize: 9,
-                formatter: () => `⚠️ ${fmtInt(q)}\n(${pct}%)`
+                fontSize: 11,
+                lineHeight: 14,
+                align: 'center'
               }
-            };
-          } else {
-            return {
-              value: val,
-              label: {
-                show: true,
-                position: "inside",
-                fontWeight: 900,
-                fontSize: 9,
-                color: "#ffffff",
-                formatter: () => `${fmtInt(q)}\n(${pct}%)`
-              }
-            };
-          }
-        }),
-        barMaxWidth: 44,
-        itemStyle: { color: COLORS.green }
-      },
-      {
-        name: "Entregados FT",
-        type: "bar",
-        stack: "pct",
-        data: pFT.map((v, idx) => {
-          const val = +(v).toFixed(2);
-          const q = qFT[idx];
-          const pct = Math.round(v);
-          return {
-            value: val,
+            },
+            color: "#ffffff",
+            backgroundColor: "rgba(0,0,0,0.15)",
+            borderRadius: 4,
+            padding: [2, 4]
+          },
+          labelLayout: { hideOverlap: true },
+          emphasis: { disabled: true },
+          markLine: {
+            silent: true,
+            symbol: ["none", "none"],
+            lineStyle: { type: "dashed", width: 2, color: "#374151" },
+            clip: false,
+            data: lineSegments
+          },
+          z: 1,
+          zlevel: 0
+        },
+        {
+          name: "Entregados FT",
+          type: "bar",
+          stack: "pct",
+          data: pFT.map(v => +(+v).toFixed(4)),
+          barMaxWidth: 52,
+          itemStyle: {
+            color: {
+              type: "linear",
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: "#f59e0b" },
+                { offset: 1, color: "#d97706" }
+              ]
+            }
+          },
+          label: {
+            show: true,
+            position: "insideTop", 
+            distance: 4,
+            color: "#111",
+            fontWeight: 950,
+            fontSize: 11,
+            lineHeight: 12,
+            formatter: (p) => {
+              const i = p.dataIndex;
+              const pct = +p.data || 0;
+              const q = (qFT)[i] || 0;
+              if (!q) return "";
+              if (pct < 8) return ""; 
+              return `${fmtInt(q)}\n(${Math.round(pct)}%)`;
+            }
+          },
+          labelLayout: { hideOverlap: true },
+          emphasis: { disabled: true },
+          z: 1,
+          zlevel: 0
+        },
+        {
+          name: "No entregados",
+          type: "bar",
+          stack: "pct",
+          data: pNO.map(v => +(+v).toFixed(4)),
+          barMaxWidth: 52,
+          itemStyle: {
+            color: {
+              type: "linear",
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: "#f87171" },
+                { offset: 1, color: "#ef4444" }
+              ]
+            }
+          },
+          label: {
+            show: true,
+            position: "top", 
+            distance: 2,
+            color: "#fff",
+            fontWeight: 900,
+            fontSize: 11,
+            lineHeight: 12,
+            backgroundColor: "rgba(239, 68, 68, 0.9)", 
+            padding: [2, 4],
+            borderRadius: 3,
+            formatter: (p) => {
+              const i = p.dataIndex;
+              const pct = +p.data || 0;
+              const q = (qNO)[i] || 0;
+              if (!q) return "";
+              return `${fmtInt(q)} (${Math.round(pct)}%)`;
+            }
+          },
+          labelLayout: { hideOverlap: true },
+          emphasis: { disabled: true },
+          z: 1,
+          zlevel: 0
+        },
+        {
+          name: "%AT Acumulado",
+          type: "line",
+          data: pAT_acum.map(v => +(+v).toFixed(2)),
+          showSymbol: true,         
+          symbol: "circle",         
+          symbolSize: 1,            
+          showAllSymbol: true,      
+          lineStyle: { 
+            width: 3.5,         
+            type: "solid",      
+            color: "#7c3aed"    
+          },
+          itemStyle: { color: "#7c3aed" },
+          label: {
+            show: true,             
+            position: "bottom",   
+            distance: 6,          
+            formatter: (p) => {
+              const val = +p.data;
+              if (val == null || isNaN(val)) return "";
+              return val.toFixed(2).replace(".", ",") + "%";
+            },
+            backgroundColor: "rgba(255, 255, 255, 0.85)", 
+            padding: [2, 4],                             
+            borderRadius: 3,                             
+            borderColor: "rgba(124, 58, 237, 0.25)",      
+            borderWidth: 1,
+            textStyle: { fontWeight: 850, color: "#6d28d9", fontSize: 10 }
+          },
+          emphasis: {
+            disabled: false,
+            scale: false, 
+            label: {
+              show: true, 
+              position: "bottom",
+              formatter: (p) => {
+                const val = +p.data;
+                if (val == null || isNaN(val)) return "";
+                return val.toFixed(2).replace(".", ",") + "%";
+              },
+              textStyle: { fontWeight: 850, color: "#6d28d9", fontSize: 10 }
+            }
+          },
+          z: 6
+        },
+        {
+          name: "Promedio días de demora",
+          type: "line",
+          yAxisIndex: 1,
+          data: avgDem,
+          symbol: "circle",
+          symbolSize: 0,          
+          showSymbol: true,       
+          connectNulls: true,
+          lineStyle: { width: 3, color: COLORS.blue },
+          itemStyle: { color: COLORS.blue },
+          label: {
+            show: true,
+            position: "top",      
+            distance: 8,
+            backgroundColor: "rgba(255,255,255,0.85)", 
+            padding: [2, 4],
+            borderRadius: 4,
+            fontWeight: 950,
+            color: "#0b1220",
+            formatter: (p) => (p.data == null || isNaN(p.data)) ? "" : `${Math.round(p.data)} d`
+          },
+          markLine: {
+            silent: true,
+            symbol: ["none", "none"],
             label: {
               show: true,
-              position: "inside",
-              fontWeight: 900,
-              fontSize: 9,
-              color: "#0f172a",
-              formatter: () => pct > 4 ? `${fmtInt(q)}\n(${pct}%)` : ""
-            }
-          };
-        }),
-        barMaxWidth: 44,
-        itemStyle: { color: COLORS.amber }
-      },
-      {
-        name: "No entregados",
-        type: "bar",
-        stack: "pct",
-        data: pNO.map((v, idx) => {
-          const val = +(v).toFixed(2);
-          const q = qNO[idx];
-          const pct = Math.round(v);
-          return {
-            value: val,
-            label: {
-              show: true,
-              position: "top",
-              backgroundColor: "#ef4444",
-              color: "#ffffff",
-              borderRadius: 4,
-              padding: [2, 4],
-              fontWeight: 900,
-              fontSize: 9,
-              formatter: () => `${fmtInt(q)} (${pct}%)`
-            }
-          };
-        }),
-        barMaxWidth: 44,
-        itemStyle: { color: COLORS.red }
-      },
-      {
-        name: "%AT Acumulado",
-        type: "line",
-        data: pAT_acum.map(v => +(v).toFixed(2)),
-        symbol: "square",
-        symbolSize: 6,
-        lineStyle: { width: 2.5, color: COLORS.purple },
-        itemStyle: { color: COLORS.purple, borderColor: "#fff", borderWidth: 1.5 },
-        label: {
-          show: true,
-          position: "bottom",
-          distance: 12,
-          backgroundColor: "#ffffff",
-          borderColor: COLORS.purple,
-          borderWidth: 1.5,
-          borderRadius: 4,
-          padding: [2, 4],
-          fontWeight: 900,
-          fontSize: 9,
-          color: "#6b21a8",
-          formatter: (p) => _fmtPct(p.value)
-        },
-        markLine: {
-          silent: true,
-          symbol: ["none", "none"],
-          lineStyle: { type: "dashed", width: 2, color: "#1e293b" },
-          data: [
-            {
-              yAxis: TARGET_OBJ,
-              label: {
-                show: true,
-                position: "end",
-                fontWeight: 900,
-                fontSize: 10,
-                backgroundColor: "#1e293b",
-                borderRadius: 4,
-                padding: [3, 5],
-                color: "#ffffff",
-                formatter: `Obj ${TARGET_OBJ}%`
-              }
-            }
-          ]
+              formatter: "Lím 7 d",
+              fontWeight: 800,
+              fontSize: 11,
+              position: "end",
+              backgroundColor: '#374151',
+              color: '#fff',
+              padding: [4, 6],
+              borderRadius: 4
+            },
+            lineStyle: { type: "dashed", width: 2, color: "#374151" },
+            data: [{ yAxis: 7 }]
+          },
+          z: 10
         }
-      },
-      {
-        name: "Promedio días de demora",
-        type: "line",
-        yAxisIndex: 1,
-        data: avgDem,
-        symbol: "circle",
-        symbolSize: 7,
-        lineStyle: { width: 2.5, color: COLORS.blue },
-        itemStyle: { color: COLORS.blue, borderColor: "#fff", borderWidth: 2 },
-        label: {
-          show: true,
-          position: "bottom",
-          distance: 8,
-          backgroundColor: "#ffffff",
-          borderColor: COLORS.blue,
-          borderWidth: 1.5,
-          padding: [2, 5],
-          borderRadius: 4,
-          fontWeight: 900,
-          fontSize: 9,
-          color: COLORS.blue,
-          formatter: (p) => (p.value == null || isNaN(p.value)) ? "" : `${Math.round(p.value)} d`
-        },
-        markLine: {
-          silent: true,
-          symbol: ["none", "none"],
-          lineStyle: { type: "dashed", width: 1.5, color: "#475569" },
-          data: [
-            {
-              yAxis: 7,
-              label: {
-                show: true,
-                position: "end",
-                fontWeight: 900,
-                fontSize: 10,
-                backgroundColor: "#334155",
-                borderRadius: 3,
-                padding: [3, 5],
-                color: "#ffffff",
-                formatter: "Lím 7 d"
-              }
-            }
-          ]
-        }
-      }
-    ]
-  };
+      ]
+    };
 
-  chartMes.setOption(option, true);
-}
+    chartMes.setOption(option, true);
+    window.addEventListener("resize", () => chartMes && chartMes.resize(), { passive: true });
+  }
 
 /* ============================
    CHART 2: TENDENCIA HISTÓRICA
    ============================ */
 function buildChartTendencia(rows) {
-  const agg = new Map();
-  const monthsSet = new Set();
+    const agg = new Map();
+    const monthsSet = new Set();
 
-  for (const r of rows) {
-    const mk = clean(r[MONTH_COL]);
-    if (!mk) continue;
-    monthsSet.add(mk);
+    for (const r of rows) {
+      const d = parseDateAny(r[FECHA_COL]);
+      if (!d) continue;
+      const mk = monthKey(d);
+      monthsSet.add(mk);
 
-    if (!agg.has(mk)) {
-      agg.set(mk, { at: 0, ft: 0, no: 0 });
+      if (!agg.has(mk)) agg.set(mk, { at: 0, ft: 0, no: 0 });
+      const c = agg.get(mk);
+
+      let rAt = toNumber(r[AT_COL]);
+      let rFt = toNumber(r[FT_COL]);
+      let rNo = toNumber(r[NO_COL]);
+
+      c.at += rAt;
+      c.ft += rFt;
+      c.no += rNo;
     }
-    const c = agg.get(mk);
-    c.at += toNumber(r["CUMPLIDO AT"]);
-    c.ft += toNumber(r["CUMPLIDO FT"]);
-    c.no += toNumber(r["NO CUMPLIDO ALMACEN"]);
-  }
 
-  const months = [...monthsSet].sort();
-  const totals = months.map(m => agg.get(m).at + agg.get(m).ft + agg.get(m).no);
+    const months = [...monthsSet].sort();
 
-  const pAT = months.map((m, i) => totals[i] ? (agg.get(m).at / totals[i]) * 100 : 0);
-  const pFT = months.map((m, i) => totals[i] ? (agg.get(m).ft / totals[i]) * 100 : 0);
-  const pNO = months.map((m, i) => totals[i] ? (agg.get(m).no / totals[i]) * 100 : 0);
+    const pAT = months.map(m => {
+      const c = agg.get(m); const t = (c?.at ?? 0) + (c?.ft ?? 0) + (c?.no ?? 0);
+      return t ? ((c.at ?? 0) / t) * 100 : 0;
+    });
+    const pFT = months.map(m => {
+      const c = agg.get(m); const t = (c?.at ?? 0) + (c?.ft ?? 0) + (c?.no ?? 0);
+      return t ? ((c.ft ?? 0) / t) * 100 : 0;
+    });
+    const pNO = months.map(m => {
+      const c = agg.get(m); const t = (c?.at ?? 0) + (c?.ft ?? 0) + (c?.no ?? 0);
+      return t ? ((c.no ?? 0) / t) * 100 : 0;
+    });
 
-  const el = document.getElementById("chartTendencia");
-  if (!el || !window.echarts) return;
-  if (!chartTendencia) chartTendencia = echarts.init(el, null, { renderer: "canvas" });
+    const el = document.getElementById("chartTendencia");
+    if (!el || !window.echarts) return;
+    if (!chartTendencia) chartTendencia = echarts.init(el, null, { renderer: "canvas" });
 
-  const labelMonths = months.map(formatMonthKey);
-
-  const option = {
-    grid: { left: 50, right: 30, top: 40, bottom: 50 },
-    tooltip: { trigger: "axis", confine: true },
-    legend: {
-      bottom: 0,
-      left: "center",
-      textStyle: { fontWeight: 700, fontSize: 11 },
-      data: ["A Tiempo %", "Fuera Tiempo %", "No Entregados %"]
-    },
-    xAxis: { type: "category", data: labelMonths, axisLabel: { fontWeight: 800, fontSize: 11 } },
-    yAxis: {
-      type: "value",
-      min: 0,
-      max: 100,
-      axisLabel: { formatter: "{value}%", fontWeight: 700, fontSize: 11 },
-      splitLine: { lineStyle: { color: "rgba(15,23,42,0.06)" } }
-    },
-    series: [
-      {
-        name: "A Tiempo %",
-        type: "line",
-        data: pAT.map(v => {
-          const val = +(v).toFixed(1);
-          if (v < TARGET_OBJ) {
-            return {
-              value: val,
-              label: {
-                show: true,
-                position: "top",
-                backgroundColor: "#ffffff",
-                borderColor: "#ef4444",
-                borderWidth: 1.5,
-                borderRadius: 4,
-                padding: [2, 4],
-                color: "#b91c1c",
-                fontWeight: 900,
-                fontSize: 10,
-                formatter: (p) => `⚠️ ${_fmtNum1(p.value)}%`
-              }
-            };
+    const option = {
+      animation: true,
+      animationDuration: 800,
+      animationDurationUpdate: 600,
+      animationEasing: "cubicOut",
+      animationEasingUpdate: "cubicOut",
+      grid: { left: 56, right: 18, top: 16, bottom: 62 },
+      tooltip: {
+        trigger: "axis",
+        confine: true,
+        backgroundColor: "transparent",
+        borderColor: "transparent",
+        shadowColor: "transparent",
+        shadowBlur: 0,
+        borderWidth: 0,
+        padding: 0,
+        formatter: (params) => {
+          const axis = params?.[0]?.axisValue ?? "";
+          let html = `
+            <div style="font-family: var(--font-body), sans-serif; padding: 10px 14px; min-width: 190px; background: #ffffff; border-radius: 8px; box-shadow: var(--shadow-xl); border: 1.5px solid var(--border-light); color: var(--text-main);">
+              <div style="font-family: var(--font-main), sans-serif; font-weight: 800; font-size: 0.9rem; margin-bottom: 8px; border-bottom: 1.5px solid var(--border-light); padding-bottom: 6px; color: var(--text-main); letter-spacing: 0.02em;">
+                📅 Tendencia: ${axis}
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+          `;
+          for (const p of params) {
+            const color = p.color || "#0d9488";
+            html += `
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; gap: 15px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-muted);">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
+                  ${p.seriesName}
+                </span>
+                <span style="font-weight: 800; color: var(--text-main);">${_fmtNum1(p.data)}%</span>
+              </div>
+            `;
           }
-          return {
-            value: val,
-            label: {
-              show: true,
-              position: "top",
-              fontWeight: 900,
-              fontSize: 10,
-              color: "#10b981",
-              formatter: (p) => `${_fmtNum1(p.value)}%`
+          html += `
+              </div>
+            </div>
+          `;
+          return html;
+        }
+      },
+      legend: {
+        bottom: 12,
+        left: "center",
+        itemWidth: 14,
+        itemHeight: 10,
+        textStyle: { fontWeight: 800 }
+      },
+      xAxis: { type: "category", data: months, axisLabel: { fontWeight: 700 } },
+      yAxis: {
+        type: "value",
+        min: 0,max: 100,
+        axisLabel: { formatter: "{value}%" },
+        splitLine: { lineStyle: { color: "rgba(15, 23, 42, 0.10)" } }
+      },
+      series: [
+        {
+          name: "A Tiempo %",
+          type: "line",
+          data: pAT.map(v => +(+v).toFixed(2)),
+          symbolSize: 7,
+          lineStyle: { width: 3, color: COLORS.green },
+          itemStyle: { color: COLORS.green, borderColor: "#fff", borderWidth: 2 },
+          label: {
+            show: true,
+            position: "top",
+            formatter: (p) => {
+              const v = +p.data || 0;
+              return (v < 78) ? `{warn|⚠ ${_fmtPct(v)}}` : `{ok|${_fmtPct(v)}}`;
+            },
+            rich: {
+              ok: { fontWeight: 900, color: COLORS.green },
+              warn: { fontWeight: 950, color: "#7f1d1d", backgroundColor: "rgba(239,68,68,0.18)", borderColor: "#ef4444", borderWidth: 1, borderRadius: 4, padding: [2, 4] }
             }
-          };
-        }),
-        lineStyle: { width: 3, color: COLORS.green },
-        itemStyle: { color: COLORS.green }
-      },
-      {
-        name: "Fuera Tiempo %",
-        type: "line",
-        data: pFT.map(v => +(v).toFixed(1)),
-        lineStyle: { width: 2.5, color: COLORS.amber },
-        itemStyle: { color: COLORS.amber },
-        label: {
-          show: true,
-          position: "top",
-          fontWeight: 800,
-          fontSize: 10,
-          color: "#0f172a",
-          formatter: (p) => `${_fmtNum1(p.value)}%`
+          },
+          zlevel: 5, z: 5
+        },
+        {
+          name: "Fuera Tiempo %",
+          type: "line",
+          data: pFT.map(v => +(+v).toFixed(2)),
+          symbolSize: 7,
+          lineStyle: { width: 3, color: COLORS.amber },
+          itemStyle: { color: COLORS.amber, borderColor: "#fff", borderWidth: 2 },
+          label: { show: true, position: "top", fontWeight: 900, formatter: (p) => _fmtPct(p.data) },
+          zlevel: 5, z: 5
+        },
+        {
+          name: "No Entregados %",
+          type: "line",
+          data: pNO.map(v => +(+v).toFixed(2)),
+          symbolSize: 7,
+          lineStyle: { width: 3, color: COLORS.red },
+          itemStyle: { color: COLORS.red, borderColor: "#fff", borderWidth: 2 },
+          label: { show: true, position: "top", fontWeight: 900, formatter: (p) => _fmtPct(p.data) },
+          zlevel: 5, z: 5
         }
-      },
-      {
-        name: "No Entregados %",
-        type: "line",
-        data: pNO.map(v => +(v).toFixed(1)),
-        lineStyle: { width: 2.5, color: COLORS.red },
-        itemStyle: { color: COLORS.red },
-        label: {
-          show: true,
-          position: "top",
-          fontWeight: 800,
-          fontSize: 10,
-          color: "#b91c1c",
-          formatter: (p) => `${_fmtNum1(p.value)}%`
-        }
-      }
-    ]
-  };
+      ]
+    };
 
-  chartTendencia.setOption(option, true);
-}
+    chartTendencia.setOption(option, true);
+    window.addEventListener("resize", () => chartTendencia && chartTendencia.resize(), { passive: true });
+  }
 
 /* ============================
    EXPORTS & INIT
@@ -842,55 +1195,64 @@ function applyAll() {
    INIT Y CARGA RÁPIDA DESDE CSV LOCAL
    ============================ */
 window.addEventListener("DOMContentLoaded", () => {
-  async function loadFromCSV() {
-    console.log("[almacen] Cargando datos desde ALMACEN.csv...");
+  async function loadFromSupabase() {
+    console.log("[almacen] Cargando datos desde Supabase (tabla ALMACEN)...");
     try {
-      const cacheUrl = `${csvUrl}?v=${getCacheBuster()}`;
-      const response = await fetch(cacheUrl);
+      const dbData = await window.fetchTableFromSupabase('ALMACEN');
 
-      if (!response.ok) {
-        showError(`No se pudo cargar el archivo ${csvUrl} (Status: ${response.status})`);
-        return;
+      if (!dbData.length) {
+        throw new Error("La tabla ALMACEN en Supabase está vacía o no se pudo leer.");
       }
 
-      const csvText = await response.text();
+      headers = Object.keys(dbData[0]);
+      data = dbData.map(row => {
+        const o = {};
+        headers.forEach(h => { o[h] = clean(row[h]); });
+        return o;
+      });
 
-      // Si PapaParse está disponible en el proyecto
-      if (window.Papa) {
-        Papa.parse(csvText, {
-          header: true,
-          delimiter: DELIM,
-          skipEmptyLines: true,
-          complete: (results) => {
-            headers = results.meta.fields || [];
-            data = results.data.map(row => {
-              const o = {};
-              headers.forEach(h => { o[h] = clean(row[h]); });
-              return o;
-            });
-            initDashboard();
-          }
-        });
-      } else {
-        // Fallback propio para parsear CSV si no estuviera PapaParse
-        const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== "");
-        if (!lines.length) {
-          showError("El archivo ALMACEN.csv está vacío.");
+      initDashboard();
+      const loader = document.getElementById("loader");
+      if (loader && !loader.classList.contains("hidden")) loader.classList.add("hidden");
+    } catch (err) {
+      console.warn("Supabase falló, intentando CSV local...", err);
+      loadFromCsvLocal();
+    }
+  }
+
+  function loadFromCsvLocal() {
+    console.log("[almacen] Cargando datos desde CSV local (ALMACEN.csv)...");
+    fetch(csvUrl + "?t=" + getCacheBuster())
+      .then(res => {
+        if (!res.ok) throw new Error("No se pudo leer el archivo CSV local.");
+        return res.text();
+      })
+      .then(text => {
+        const parsed = Papa.parse(text, { delimiter: DELIM, skipEmptyLines: true });
+        const m = parsed.data;
+        if (!m.length || m.length < 2) {
+          showError("El CSV de Almacén está vacío o no se pudo procesar.");
           return;
         }
-        headers = lines[0].split(DELIM).map(clean);
-        data = lines.slice(1).map(line => {
-          const values = line.split(DELIM);
+        headers = m[0].map(clean);
+        data = m.slice(1).map(row => {
           const o = {};
-          headers.forEach((h, i) => { o[h] = clean(values[i]); });
+          headers.forEach((h, i) => { o[h] = clean(row[i]); });
           return o;
         });
         initDashboard();
-      }
-    } catch (err) {
-      console.error(err);
-      showError("Error cargando el archivo ALMACEN.csv: " + (err?.message || err));
-    }
+      })
+      .catch(err2 => {
+        console.error(err2);
+        showError("Error al cargar datos (Supabase fuera de línea y fallo al leer CSV local): " + err2.message);
+      })
+      .finally(() => {
+        const loader = document.getElementById("loader");
+        if (loader) {
+          loader.style.display = "none";
+          loader.classList.add("hidden");
+        }
+      });
   }
 
   function initDashboard() {
@@ -929,7 +1291,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  loadFromCSV();
+  loadFromSupabase();
 });
 
 window.addEventListener("resize", () => {

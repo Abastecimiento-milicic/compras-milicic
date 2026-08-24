@@ -1,25 +1,32 @@
 :root {
-  /* --- PALETA DE COLORES MEJORADA (TEMA NARANJA PREMIUM) --- */
-  --bg-body: #f8fafc; /* Slate-50 - más claro y limpio */
+  /* --- PALETA DE COLORES MEJORADA --- */
+  --bg-body: #f8fafc;
+  /* Slate-50 - más claro y limpio */
   --bg-card: #ffffff;
-  --bg-subtle: #f1f5f9; /* Para fondos alternos */
+  --bg-subtle: #f1f5f9;
+  /* Para fondos alternos */
 
-  --text-main: #0f172a; /* Slate-900 */
-  --text-secondary: #334155; /* Slate-700 */
-  --text-muted: #64748b; /* Slate-500 */
+  --text-main: #0f172a;
+  /* Slate-900 */
+  --text-secondary: #334155;
+  /* Slate-700 */
+  --text-muted: #64748b;
+  /* Slate-500 */
 
-  --border-light: #e2e8f0; /* Slate-200 */
-  --border-hover: #cbd5e1; /* Slate-300 */
+  --border-light: #e2e8f0;
+  /* Slate-200 */
+  --border-hover: #cbd5e1;
+  /* Slate-300 */
 
-  /* Colores de Marca (Invertido: Tema Naranja Premium con toques de azul) */
+  /* Colores de Marca (Tema Naranja Premium con toques de azul) */
   --col-brand: #F26716; /* Energetic Orange */
   --col-brand-dk: #C94F0C; /* Darker Orange */
   --col-brand-lt: #3767A6; /* Medium blue */
   --col-brand-gradient: linear-gradient(135deg, #C94F0C 0%, #F26716 50%, #3767A6 100%);
 
   /* Colores de Estado Mejorados */
-  --col-blue: #F26716;
-  --col-blue-dk: #C94F0C;
+  --col-blue: #3b82f6;
+  --col-blue-dk: #2563eb;
   --col-green: #10b981;
   --col-green-dk: #059669;
   --col-amber: #f59e0b;
@@ -35,7 +42,7 @@
   --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.08);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.08);
-  --shadow-colored: 0 8px 16px -4px rgba(37, 99, 235, 0.15);
+  --shadow-colored: 0 8px 16px -4px rgba(242, 103, 22, 0.15);
 
   /* Bordes y Radio */
   --radius-xl: 16px;
@@ -95,10 +102,10 @@ body {
 }
 
 /* =========================================
-   TOPBAR (Enhanced Gradient in Blue)
+   TOPBAR (Enhanced Gradient)
    ========================================= */
 .topbar {
-  background: var(--col-brand-gradient);
+  background: linear-gradient(135deg, #094f4a 0%, #0d736b 50%, #084c46 100%);
   background-size: 200% 100%;
   animation: gradientShift 8s ease infinite;
   color: #fff;
@@ -112,10 +119,12 @@ body {
 }
 
 @keyframes gradientShift {
+
   0%,
   100% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
@@ -157,15 +166,6 @@ body {
   font-size: 0.95rem;
   font-weight: 700;
   font-family: var(--font-main);
-  line-height: 1.2;
-}
-
-.update-version {
-  font-size: 0.65rem;
-  opacity: 0.7;
-  font-weight: 600;
-  font-family: monospace;
-  margin-top: 2px;
 }
 
 .btn-refresh-top {
@@ -207,6 +207,7 @@ body {
 
 .tab {
   width: 220px;
+  /* Ancho fijo igual para todas */
   flex: 0 0 auto;
   text-align: center;
   justify-content: center;
@@ -229,9 +230,10 @@ body {
 }
 
 .tab.active {
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(15, 118, 110, 0.08);
+  /* Brand color alpha */
   color: var(--col-brand-dk);
-  border-color: rgba(37, 99, 235, 0.2);
+  border-color: rgba(15, 118, 110, 0.2);
 }
 
 /* =========================================
@@ -282,17 +284,21 @@ body {
 
 .panel-title {
   background: var(--col-brand);
+  /* Fondo azul/teal corporativo */
   padding: 0.75rem 1.25rem;
+  /* Un poco menos alto para ser más elegante */
   font-family: var(--font-main);
   font-size: 0.95rem;
   font-weight: 700;
   color: #ffffff;
+  /* Texto blanco */
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
+/* Bolita decorativa antes del título */
 .panel-title::before {
   content: "";
   display: block;
@@ -300,6 +306,7 @@ body {
   height: 6px;
   border-radius: 50%;
   background: #ffffff;
+  /* Bolita blanca para resaltar sobre el fondo */
 }
 
 .panel-body {
@@ -322,12 +329,16 @@ body {
   font-weight: 800;
   text-transform: uppercase;
   color: #ffffff;
+  /* Letra clara que resalte */
   background-color: var(--col-brand);
+  /* Fondo de color (teal) */
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
+  /* Bordes redondeados sutiles */
   margin-bottom: 0.5rem;
   letter-spacing: 0.05em;
   width: fit-content;
+  /* El fondo solo ocupa lo necesario */
 }
 
 select,
@@ -354,17 +365,19 @@ select:focus,
 input:focus {
   border-color: var(--col-brand);
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12), var(--shadow-sm);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12), var(--shadow-sm);
   transform: translateY(-1px);
 }
 
 .multi-select {
   height: auto;
   min-height: 100px;
+  /* para select multiple */
 }
 
 .hint {
   display: none !important;
+  /* Ocultar leyendas globalmente */
 }
 
 .btn {
@@ -394,7 +407,7 @@ input:focus {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(55, 103, 166, 0.05) 0%, rgba(45, 75, 115, 0.08) 100%);
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.05) 0%, rgba(20, 184, 166, 0.08) 100%);
   opacity: 0;
   transition: opacity var(--transition-base);
 }
@@ -445,7 +458,7 @@ input:focus {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.03) 0%, transparent 70%);
+  background: radial-gradient(circle at top right, rgba(13, 148, 136, 0.03) 0%, transparent 70%);
   opacity: 0;
   transition: opacity var(--transition-base);
 }
@@ -453,13 +466,14 @@ input:focus {
 .kpi:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
-  border-color: rgba(37, 99, 235, 0.2);
+  border-color: rgba(13, 148, 136, 0.2);
 }
 
 .kpi:hover::before {
   opacity: 1;
 }
 
+/* Bordes superiores de color con gradiente */
 .kpi::after {
   content: "";
   position: absolute;
@@ -504,8 +518,10 @@ input:focus {
 .kpi-title {
   font-size: 0.75rem;
   font-weight: 900;
+  /* Más negrita */
   text-transform: uppercase;
   color: #111827;
+  /* Más oscuro para resaltar */
   letter-spacing: 0.05em;
   margin-bottom: 0.25rem;
 }
@@ -559,13 +575,14 @@ input:focus {
    CHARTS
    ========================================= */
 .chart-card {
+  /* Dentro del panel body, no necesita borde extra si ya está en panel */
   background: #fff;
   border-radius: var(--radius-lg);
+  /* border: 1px solid var(--border-light); */
 }
 
 .chart-wrap {
-  min-height: 400px;
-  height: auto;
+  height: 350px;
   width: 100%;
 }
 
@@ -635,10 +652,12 @@ input:focus {
 }
 
 @keyframes bar-bounce {
+
   0%,
   100% {
     transform: scaleY(0.4);
   }
+
   50% {
     transform: scaleY(1);
   }
@@ -849,7 +868,6 @@ input:focus {
   font-size: 0.87rem;
   margin-top: 0.75rem;
 }
-
 /* ===== Shared Check-list Filter Styles ===== */
 .check-list {
   display: flex;
@@ -863,6 +881,7 @@ input:focus {
   background: #fff;
 }
 
+/* Reset nested labels from .filter label defaults */
 .filter .check-list label {
   display: flex !important;
   align-items: center !important;
@@ -884,11 +903,11 @@ input:focus {
 }
 
 .check-list label:hover {
-  background: #eff6ff !important;
+  background: #e8f5f2 !important;
 }
 
 .check-list input[type='checkbox'] {
-  accent-color: #1d4ed8;
+  accent-color: #0b5d46;
   width: 15px;
   height: 15px;
   flex-shrink: 0;
@@ -900,61 +919,49 @@ input:focus {
   margin-bottom: 2px;
   padding-bottom: 4px;
   font-weight: 700 !important;
-  color: #1d4ed8 !important;
+  color: #0b5d46 !important;
 }
 
-/* =========================================
-   NAV TABS (Estilo Pestañas Redondeadas)
-   ========================================= */
-.tabs-bar {
-  background: #ffffff;
-  padding: 0.5rem 1.5rem 0 1.5rem;
-  display: flex;
-  gap: 0.5rem;
-  border-bottom: 2px solid #e2e8f0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-}
+/* ========================================================
+   ELEGANT DARK THEME OVERRIDES
+   ======================================================== */
 
-.tab-item {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.8rem 2rem;
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #64748b;
-  text-decoration: none;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  background: transparent;
-  transition: all 0.2s ease;
-  position: relative;
-  bottom: -2px; /* Alinea con el borde inferior */
-  border: 2px solid transparent;
-}
+/* Specific Dark Mode element overrides for hardcoded values */
 
-.tab-item:hover {
-  color: #2563eb;
-  background: #f8fafc;
-}
 
-.tab-item.active {
-  color: #2563eb;
-  background: #ffffff;
-  border-color: #e2e8f0;
-  border-bottom-color: #ffffff; /* Oculta la línea gris base */
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
-}
 
-/* Subrayado azul activo como en la foto */
-.tab-item.active::after {
-  content: "";
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background-color: #2563eb;
-  border-radius: 3px 3px 0 0;
-}
+
+
+
+
+
+
+
+
+/* Tables and grids */
+
+
+
+
+/* Tab styling overrides */
+
+
+
+
+/* Topbar */
+
+
+
+/* Demoras & Sparkline specific tweaks */
+
+
+
+
+
+
+
+
+/* Ensure no text remains hardcoded black in dark mode */
+
+
+

@@ -2,6 +2,7 @@
 <html lang="es">
 
 <head>
+  <link rel="icon" href="data:,">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ALMACÉN — Cumplimiento de Pedidos</title>
@@ -16,7 +17,6 @@
   <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/lib/browser.min.js"></script>
   <script src="last-update.js"></script>
   <script src="cache-utils.js"></script>
-  <script src="theme.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
 <!-- Precarga de recursos de la pestaña Compras para navegación ultra rápida -->
@@ -63,9 +63,9 @@
   </header>
 
   <!-- BARRA DE PESTAÑAS / NAVEGACIÓN -->
-<nav class="tabs-bar">
-    <a href="index.html" class="tab-item">COMPRAS</a>
-    <a href="almacen.html" class="tab-item active">ALMACÉN</a>
+  <nav class="tabs">
+    <a href="index.html" class="tab">COMPRAS</a>
+    <a href="almacen.html" class="tab active">ALMACÉN</a>
   </nav>
 
   <main class="container">
@@ -142,35 +142,50 @@
         <button class="help-btn" onclick="openHelp('kpis-acumulado')" title="Ayuda sobre KPIs acumulados">ℹ</button>
       </div>
 
-      <div class="panel-body kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
-        <div class="kpi kpi-teal">
-          <div class="kpi-title">COMPROMETIDOS</div>
+      <div class="panel-body kpi-grid kpi-grid-5">
+        <div class="kpi kpi-blue">
+          <div class="kpi-head">
+            <div class="kpi-title">COMPROMETIDOS</div>
+            <div class="kpi-icon">📦</div>
+          </div>
           <div id="kpiTotal" class="kpi-value">-</div>
           <div class="kpi-sub">Total Pedidos Evaluados</div>
         </div>
 
         <div class="kpi kpi-green">
-          <div class="kpi-title">CUMPLIDO AT</div>
+          <div class="kpi-head">
+            <div class="kpi-title">ENTREGADOS A TIEMPO</div>
+            <div class="kpi-icon">✅</div>
+          </div>
           <div id="kpiATpct" class="kpi-value">-</div>
           <div id="kpiATqty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
         </div>
 
         <div class="kpi kpi-amber">
-          <div class="kpi-title">CUMPLIDO FT</div>
+          <div class="kpi-head">
+            <div class="kpi-title">ENTREGADOS FUERA DE TIEMPO</div>
+            <div class="kpi-icon">⏳</div>
+          </div>
           <div id="kpiFTPct" class="kpi-value">-</div>
           <div id="kpiFTQty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
         </div>
 
         <div class="kpi kpi-red">
-          <div class="kpi-title">NO CUMPLIDO ALMACEN</div>
+          <div class="kpi-head">
+            <div class="kpi-title">NO ENTREGADOS</div>
+            <div class="kpi-icon">🚫</div>
+          </div>
           <div id="kpiNOPct" class="kpi-value">-</div>
           <div id="kpiNOQty" class="kpi-sub kpi-sub-strong">Cantidad: -</div>
         </div>
 
         <div class="kpi kpi-slate">
-          <div class="kpi-title">DEMORA PROMEDIO</div>
+          <div class="kpi-head">
+            <div class="kpi-title">DEMORA PROMEDIO</div>
+            <div class="kpi-icon">📅</div>
+          </div>
           <div id="kpiDemoraAvg" class="kpi-value">-</div>
-          <div class="kpi-sub">Días promedio de desvío</div>
+          <div class="kpi-sub">Días promedio</div>
         </div>
       </div>
     </section>
@@ -181,33 +196,48 @@
         <button class="help-btn" onclick="openHelp('kpis-mes')" title="Ayuda sobre KPIs del mes">ℹ</button>
       </div>
 
-      <div class="panel-body kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
-        <div class="kpi kpi-teal">
-          <div class="kpi-title">COMPROMETIDOS (MES)</div>
+      <div class="panel-body kpi-grid kpi-grid-5">
+        <div class="kpi kpi-blue">
+          <div class="kpi-head">
+            <div class="kpi-title">COMPROMETIDOS (MES)</div>
+            <div class="kpi-icon">📦</div>
+          </div>
           <div id="kpiTotalMes" class="kpi-value">-</div>
           <div class="kpi-sub">Total del mes</div>
         </div>
 
         <div class="kpi kpi-green">
-          <div class="kpi-title">% CUMPLIDO AT (MES)</div>
+          <div class="kpi-head">
+            <div class="kpi-title">% AT (MES)</div>
+            <div class="kpi-icon">✅</div>
+          </div>
           <div id="kpiATmes" class="kpi-value">-</div>
-          <div class="kpi-sub kpi-sub-strong">Despachado a tiempo</div>
+          <div id="kpiATmesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
         </div>
 
         <div class="kpi kpi-amber">
-          <div class="kpi-title">% CUMPLIDO FT (MES)</div>
+          <div class="kpi-head">
+            <div class="kpi-title">% FT (MES)</div>
+            <div class="kpi-icon">⏳</div>
+          </div>
           <div id="kpiFTmes" class="kpi-value">-</div>
-          <div class="kpi-sub kpi-sub-strong">Despachado fuera de término</div>
+          <div id="kpiFTmesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
         </div>
 
         <div class="kpi kpi-red">
-          <div class="kpi-title">% NO CUMPLIDO (MES)</div>
+          <div class="kpi-head">
+            <div class="kpi-title">% NE (MES)</div>
+            <div class="kpi-icon">🚫</div>
+          </div>
           <div id="kpiNOmes" class="kpi-value">-</div>
-          <div class="kpi-sub kpi-sub-strong">Pendiente / No entregado</div>
+          <div id="kpiNOmesSub" class="kpi-sub kpi-sub-strong">Cant: -</div>
         </div>
 
         <div class="kpi kpi-slate">
-          <div class="kpi-title">DEMORA (MES)</div>
+          <div class="kpi-head">
+            <div class="kpi-title">DEMORA (MES)</div>
+            <div class="kpi-icon">📅</div>
+          </div>
           <div id="kpiDemoraMes" class="kpi-value">-</div>
           <div class="kpi-sub kpi-sub-strong">Promedio del mes</div>
         </div>
@@ -221,7 +251,7 @@
       </div>
       <div class="panel-body">
         <div class="chart-card">
-          <div class="chart-wrap" style="height: 580px;">
+          <div class="chart-wrap">
            <div id="chartMes" class="chart-box"></div>
           </div>
         </div>
@@ -234,7 +264,7 @@
       </div>
       <div class="panel-body">
         <div class="chart-card">
-          <div class="chart-wrap" style="height: 400px;">
+          <div class="chart-wrap">
             <div id="chartTendencia" class="chart-box"></div>
           </div>
         </div>
