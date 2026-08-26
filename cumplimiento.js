@@ -62,6 +62,8 @@
   const CLASIF2_CANDIDATES = ["CLASIFICACION", "CLASIFICACION 2", "CLASIFICACIÓN 2", "CLASIFICACION2", "CLASIFICACION_2"];
   const GCOC_CANDIDATES = ["GRUPO DE COMPRAS OC", "GRUPO DE COMPRAS_OC", "GRUPO DE COMPRA OC"];
   const CENTRO_CANDIDATES = ["CENTRO"];
+  const OPERADOR_CANDIDATES = ["OPERADOR OC", "COMPRADOR", "COMPRADOR (OPERADOR OC)"];
+  const PROVEEDOR_CANDIDATES = ["PROVEEDOR"];
 
   let AT_COL = "CUMPLIDO AT";
   let FT_COL = "CUMPLIDO FT";
@@ -90,6 +92,8 @@
   let CLASIF2_COL = null;
   let GCOC_COL = null;
   let CENTRO_COL = null;
+  let OPERADOR_COL = null;
+  let PROVEEDOR_COL = null;
 
   let useFinalColumns = false;
 
@@ -327,6 +331,9 @@
   function filteredRowsNoMes() {
     let rows = rowsByClienteBase();
 
+    const ops = getSelValues("cumpl_operadorSelect");
+    if (ops.length && OPERADOR_COL) rows = rows.filter(r => ops.includes(clean(r[OPERADOR_COL])));
+
     const c2s = getCheckedClasif2();
     if (c2s.length && CLASIF2_COL) rows = rows.filter(r => c2s.includes(clean(r[CLASIF2_COL])));
     const gcs = getSelValues("cumpl_gcocSelect");
@@ -334,6 +341,9 @@
     
     const cents = getSelValues("centroSelect");
     if (cents.length && CENTRO_COL) rows = rows.filter(r => cents.includes(clean(r[CENTRO_COL])));
+
+    const provs = getSelValues("cumpl_proveedorSelect");
+    if (provs.length && PROVEEDOR_COL) rows = rows.filter(r => provs.includes(clean(r[PROVEEDOR_COL])));
     
     const solo = getSelValues("cumpl_soloComprasSelect");
     if (solo.length && !solo.includes("__ALL__") && solo.length < 2) {
@@ -375,6 +385,36 @@
     const sel = document.getElementById("centroSelect");
     if (sel) sel.disabled = false;
     fillSelect("centroSelect", vals, "Todos");
+  }
+
+  function renderOperadores(rowsBase) {
+    const hint = document.getElementById("cumpl_operadorHint");
+    if (!OPERADOR_COL) {
+      if (hint) hint.textContent = "Columna: (no encontrada)";
+      const sel = document.getElementById("cumpl_operadorSelect");
+      if (sel) { sel.disabled = true; sel.innerHTML = `<option value="">Todos</option>`; }
+      return;
+    }
+    if (hint) hint.textContent = `Columna: ${OPERADOR_COL}`;
+    const vals = uniqSorted(rowsBase.map(r => clean(r[OPERADOR_COL])).filter(Boolean));
+    const sel = document.getElementById("cumpl_operadorSelect");
+    if (sel) sel.disabled = false;
+    fillSelect("cumpl_operadorSelect", vals, "Todos");
+  }
+
+  function renderProveedores(rowsBase) {
+    const hint = document.getElementById("cumpl_proveedorHint");
+    if (!PROVEEDOR_COL) {
+      if (hint) hint.textContent = "Columna: (no encontrada)";
+      const sel = document.getElementById("cumpl_proveedorSelect");
+      if (sel) { sel.disabled = true; sel.innerHTML = `<option value="">Todos</option>`; }
+      return;
+    }
+    if (hint) hint.textContent = `Columna: ${PROVEEDOR_COL}`;
+    const vals = uniqSorted(rowsBase.map(r => clean(r[PROVEEDOR_COL])).filter(Boolean));
+    const sel = document.getElementById("cumpl_proveedorSelect");
+    if (sel) sel.disabled = false;
+    fillSelect("cumpl_proveedorSelect", vals, "Todos");
   }
 
   function renderClasif2(rowsBase) {
@@ -436,7 +476,7 @@
     if (prevValid.length) {
       [...sel.options].forEach(o => { if (prevSet.has(o.value)) o.selected = true; });
     } else {
-      const last = months.length >= 2 ? months[months.length - 2] : months[months.length - 1];
+      const last = months.length >= 1 ? months[months.length - 1] : null;
       if (last) {
         const optLast = [...sel.options].find(o => o.value === last);
         if (optLast) optLast.selected = true;
@@ -1315,7 +1355,11 @@
   }
 
   function clearAllFilters() {
-    const selects = ["cumpl_clienteSelect", "cumpl_clasif2Select", "cumpl_gcocSelect", "cumpl_mesSelect", "centroSelect", "cumpl_soloComprasSelect"];
+    const selects = [
+      "cumpl_clienteSelect", "cumpl_operadorSelect", "cumpl_clasif2Select", 
+      "cumpl_gcocSelect", "cumpl_mesSelect", "centroSelect", 
+      "cumpl_soloComprasSelect", "cumpl_proveedorSelect"
+    ];
     selects.forEach(id => {
       const sel = document.getElementById(id);
       if (!sel) return;
@@ -1438,17 +1482,23 @@
         CLASIF2_COL = CLASIF2_CANDIDATES.find(c => headers.includes(c)) || null;
         GCOC_COL = GCOC_CANDIDATES.find(c => headers.includes(c)) || null;
         CENTRO_COL = CENTRO_CANDIDATES.find(c => headers.includes(c)) || null;
+        OPERADOR_COL = OPERADOR_CANDIDATES.find(c => headers.includes(c)) || null;
+        PROVEEDOR_COL = PROVEEDOR_CANDIDATES.find(c => headers.includes(c)) || null;
 
         setText("cumpl_clienteHint", `Columna cliente: ${CLIENT_COL}`);
         setText("cumpl_clasif2Hint", CLASIF2_COL ? `Columna: ${CLASIF2_COL}` : "Columna: (no encontrada)");
         setText("cumpl_gcocHint", GCOC_COL ? `Columna: ${GCOC_COL}` : "Columna: (no encontrada)");
         setText("centroHint", CENTRO_COL ? `Columna: ${CENTRO_COL}` : "Columna: (no encontrada)");
+        setText("cumpl_operadorHint", OPERADOR_COL ? `Columna: ${OPERADOR_COL}` : "Columna: (no encontrada)");
+        setText("cumpl_proveedorHint", PROVEEDOR_COL ? `Columna: ${PROVEEDOR_COL}` : "Columna: (no encontrada)");
 
         renderClientes();
         renderCentros();
         const baseCliente = rowsByClienteBase();
+        renderOperadores(baseCliente);
         renderClasif2(baseCliente);
         renderGcoc(baseCliente);
+        renderProveedores(baseCliente);
         
         applyAll();
 
@@ -1513,6 +1563,50 @@
           applyAll();
         });
 
+        document.getElementById("cumpl_operadorSelect")?.addEventListener("change", (e) => {
+          enforceAllOption(e.target);
+          applyAll();
+        });
+
+        document.getElementById("cumpl_proveedorSelect")?.addEventListener("change", (e) => {
+          enforceAllOption(e.target);
+          applyAll();
+        });
+
+        document.getElementById("cumpl_btnDownloadBase")?.addEventListener("click", () => {
+          const rowsFilt = filteredRowsByAll();
+          if (!rowsFilt.length) {
+            alert("No hay datos para el filtro actual.");
+            return;
+          }
+          const cols = headers.slice();
+          const cliente = safeFilePart(selLabel("cumpl_clienteSelect"));
+          const c2 = safeFilePart(selLabel("cumpl_clasif2Select"));
+          const gc = safeFilePart(selLabel("cumpl_gcocSelect"));
+          const centro = safeFilePart(selLabel("centroSelect"));
+          const mes = safeFilePart(selLabel("cumpl_mesSelect"));
+          const filename = `BASE_COMPLETA_${cliente}_${c2}_${gc}_${centro}_${mes}.csv`;
+          downloadExcel(filename, rowsFilt, cols, "Base Completa");
+        });
+
+        document.getElementById("cumpl_btnDownloadFT")?.addEventListener("click", () => {
+          const rowsFilt = filteredRowsByAll();
+          const ftRows = rowsFilt.filter(r => toNumber(r[FT_COL]) > 0);
+
+          if (!ftRows.length) {
+            alert("No hay FUERA DE TERMINO para el filtro actual.");
+            return;
+          }
+          const cols = headers.slice();
+          const cliente = safeFilePart(selLabel("cumpl_clienteSelect"));
+          const c2 = safeFilePart(selLabel("cumpl_clasif2Select"));
+          const gc = safeFilePart(selLabel("cumpl_gcocSelect"));
+          const centro = safeFilePart(selLabel("centroSelect"));
+          const mes = safeFilePart(selLabel("cumpl_mesSelect"));
+          const filename = `FUERA_DE_TERMINO_${cliente}_${c2}_${gc}_${centro}_${mes}.csv`;
+          downloadExcel(filename, ftRows, cols, "Fuera de Termino");
+        });
+
         document.getElementById("cumpl_btnDownloadNO")?.addEventListener("click", () => {
           const rowsFilt = filteredRowsByAll();
           const noRows = getNoEntregadosRows(rowsFilt);
@@ -1525,7 +1619,7 @@
           const cols = headers.slice();
 
           const cliente = safeFilePart(selLabel("cumpl_clienteSelect"));
-          const c2 = "Todos"; 
+          const c2 = safeFilePart(selLabel("cumpl_clasif2Select")); 
           const gc = safeFilePart(selLabel("cumpl_gcocSelect"));
           const centro = safeFilePart(selLabel("centroSelect"));
           const mes = safeFilePart(selLabel("cumpl_mesSelect"));

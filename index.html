@@ -19,6 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/lib/browser.min.js"></script>
   <script src="last-update.js"></script>
   <script src="cache-utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
 </head>
@@ -99,18 +100,30 @@
             <p>Filtrá por Grupo de Compra</p>
             <h4>Mes de Entrega</h4>
             <p>Seleccioná uno o varios meses (formato <em>MMM-AAAA</em>) para acotar el período analizado.</p>
+            <h4>⬇ Descargar Base Completa</h4>
+            <p>Exporta en CSV la base de datos completa según los filtros seleccionados.</p>
             <h4>⬇ Descargar NO entregados</h4>
             <p>Exporta en CSV el listado de pedidos no entregados según los filtros activos.</p>
+            <h4>⬇ Descargar FUERA de término</h4>
+            <p>Exporta en CSV el listado de pedidos entregados fuera de término según los filtros activos.</p>
             <div class=&quot;hm-tip&quot;>💡 Si no seleccionás ningún filtro, se muestran todos los datos disponibles.</div>
           `)" title="Ayuda sobre los filtros">ℹ</button>
         </div>
-        <div class="panel-body filters filters-6">
+        <div class="panel-body filters filters-5">
           <div class="filter">
-            <label>CLIENTE / OBRA</label>
+            <label>CLIENTE</label>
             <select id="cumpl_clienteSelect" multiple size="6" class="multi-select">
               <option value="">Todos</option>
             </select>
             <div id="cumpl_clienteHint" class="hint">Columna: -</div>
+          </div>
+
+          <div class="filter">
+            <label>COMPRADOR (OPERADOR OC)</label>
+            <select id="cumpl_operadorSelect" multiple size="6" class="multi-select">
+              <option value="">Todos</option>
+            </select>
+            <div id="cumpl_operadorHint" class="hint">Columna: -</div>
           </div>
 
           <div class="filter">
@@ -122,7 +135,7 @@
           </div>
 
           <div class="filter">
-            <label>GC OC</label>
+            <label>GRUPO COMPRAS OC</label>
             <select id="cumpl_gcocSelect" multiple size="6" class="multi-select">
               <option value="">Todos</option>
             </select>
@@ -143,21 +156,40 @@
             <div id="centroHint" class="hint">Columna: -</div>
           </div>
 
-          <div class="filter" style="align-self: stretch; display: flex; flex-direction: column;">
-            <label style="width: 100%; box-sizing: border-box;">SOLO COMPRAS ABASTECIMIENTO</label>
-            <select id="cumpl_soloComprasSelect" multiple size="3" class="multi-select" style="min-height: 0; height: auto; flex-grow: 0; margin-bottom: 8px;">
+          <div class="filter">
+            <label>PROVEEDOR</label>
+            <select id="cumpl_proveedorSelect" multiple size="6" class="multi-select">
+              <option value="">Todos</option>
+            </select>
+            <div id="cumpl_proveedorHint" class="hint">Columna: -</div>
+          </div>
+
+          <div class="filter">
+            <label>SOLO COMPRAS ABASTECIMIENTO</label>
+            <select id="cumpl_soloComprasSelect" multiple size="6" class="multi-select">
               <option value="">Todos</option>
               <option value="1">SI</option>
               <option value="0">NO</option>
             </select>
             <div id="cumpl_soloComprasHint" class="hint">Columna: SOLO COMPRAS ABASTECIMIENTO</div>
-            
-            <!-- Botón Descargar NO entregados -->
-            <div style="width: 100%; margin-top: auto;">
-              <button id="cumpl_btnDownloadNO" class="btn" style="font-size: 0.8rem; padding: 0.5rem 0.75rem; width: 100%;">
+          </div>
+
+          <div class="filter" style="align-self: stretch; display: flex; flex-direction: column; gap: 8px; justify-content: center;">
+            <div style="width: 100%;">
+              <button id="cumpl_btnDownloadBase" class="btn" title="Descargar toda la base de datos de los filtros actuales" style="background: #10b981; border-color: #059669; color: white; font-weight: bold; font-size: 0.85rem; padding: 0.5rem 0.75rem; width: 100%;">
+                ⬇ Descargar Base Completa
+              </button>
+              <div class="hint" style="text-align: center;">Exporta Base Completa</div>
+            </div>
+            <div style="width: 100%;">
+              <button id="cumpl_btnDownloadNO" class="btn" title="Descargar solo los pedidos NO entregados" style="background: white; color: #333; border: 1px solid #ccc; font-weight: bold; font-size: 0.85rem; padding: 0.5rem 0.75rem; width: 100%;">
                 ⬇ Descargar NO entregados
               </button>
-              <div class="hint">Exporta CSV con “;”</div>
+            </div>
+            <div style="width: 100%;">
+              <button id="cumpl_btnDownloadFT" class="btn" title="Descargar solo los pedidos FUERA de término" style="background: white; color: #333; border: 1px solid #ccc; font-weight: bold; font-size: 0.85rem; padding: 0.5rem 0.75rem; width: 100%;">
+                ⬇ Descargar FUERA de término
+              </button>
             </div>
           </div>
         </div>
