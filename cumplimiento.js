@@ -1408,7 +1408,7 @@
     applyChartDefaults();
 
     setText("lastUpdate", (window.LAST_UPDATE || window.FECHA_ULTIMA_ACTUALIZACION || "").toString().trim() || "--/--/----");
-    const cacheKey = "processed_cumplimiento_" + window.CACHE_BUSTER;
+    const cacheKey = "processed_cumplimiento_" + window.MI_CACHE_VERSION;
 
     if (window.getCachedData) {
       window.getCachedData(cacheKey).then(cached => {
@@ -1438,7 +1438,7 @@
     }
 
     function loadFromCsv() {
-      fetchWithCache(csvUrl + "?t=" + window.CACHE_BUSTER)
+      fetchWithCache(csvUrl + "?t=" + window.MI_CACHE_VERSION)
         .then(text => {
           const m = parseDelimited(text, DELIM);
           if (!m.length || m.length < 2) {
