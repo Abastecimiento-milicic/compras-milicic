@@ -5,7 +5,7 @@ window.FECHA_ULTIMA_ACTUALIZACION = "01/09/2026"; // Actualiza a la fecha de tu 
 
 // 2. Clave de versión dinámica (Genera un timestamp automático)
 // Esto fuerza al navegador a pedir los CSVs nuevos en cada carga
-window.MI_CACHE_VERSION = "01/09/2026"; 
+window.MI_CACHE_VERSION = "02/09/2026"; 
 
 // Dibuja la fecha automáticamente al cargar
 document.addEventListener("DOMContentLoaded", () => {
