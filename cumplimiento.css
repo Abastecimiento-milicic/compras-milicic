@@ -47,12 +47,55 @@
 /* =======================================================
    Ajuste de alturas para dar más aire vertical a las etiquetas
 ========================================================== */
-#cumpl_chartMes, #chartMes {
-  height: 380px !important;  /* Le da los 80px extra que le faltaban para que no se corten las demoras */
+#cumpl_chartMes, #cumpl_chartEmision, #chartMes {
+  height: 400px !important;  /* Espacio extra para las etiquetas de demoras y la suma total por mes */
+}
+.chart-wrap:has(#cumpl_chartMes),
+.chart-wrap:has(#cumpl_chartEmision),
+.chart-wrap:has(#chartMes) {
+  height: 400px;
 }
 
 #cumpl_chartTendencia, #chartTendencia {
   height: 350px !important;  /* Restaurado a 350px para evitar que se vea comprimido */
+}
+
+/* Subtabs bar sobre el gráfico principal */
+.chart-subtabs-bar {
+  display: inline-flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
+  margin-bottom: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.subtab-btn {
+  background: transparent;
+  border: none;
+  padding: 7px 15px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease-in-out;
+  font-family: inherit;
+}
+
+.subtab-btn:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.subtab-btn.active {
+  background: #ffffff;
+  color: #0d9488;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* =======================================================

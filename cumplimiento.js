@@ -99,6 +99,10 @@
 
   let chartMes = null;
   let chartTendencia = null;
+  let chartEmision = null;
+  let currentChartTab = "cumplimiento";
+  let lastFilteredRows = [];
+  let lastChartMesMonths = [];
 
   /* ============================
      HELPERS
@@ -680,6 +684,7 @@
     }
 
     const months = [...monthsSet].sort();
+    lastChartMesMonths = months;
     const qAT = months.map(m => agg.get(m)?.at ?? 0);
     const qFT = months.map(m => agg.get(m)?.ft ?? 0);
     const qNO = months.map(m => agg.get(m)?.no ?? 0);
@@ -799,7 +804,7 @@
       animationDurationUpdate: 600,
       animationEasing: "cubicOut",
       animationEasingUpdate: "cubicOut",
-      grid: { left: 56, right: 70, top: 40, bottom: 62 },
+      grid: { left: 56, right: 70, top: 40, bottom: 82 },
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "shadow" },
@@ -860,6 +865,19 @@
               </div>
             `;
           }
+          const idx = at ? at.dataIndex : (ft ? ft.dataIndex : (ne ? ne.dataIndex : -1));
+          if (idx >= 0) {
+            const totMes = (qAT[idx] ?? 0) + (qFT[idx] ?? 0) + (qNO[idx] ?? 0);
+            html += `
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; border-top: 1.5px solid var(--border-light); padding-top: 6px; margin-top: 2px; gap: 15px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--text-main);">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: #64748b;"></span>
+                  Total Pedidos
+                </span>
+                <span style="font-weight: 800; color: var(--text-main);">${fmtInt(totMes)}</span>
+              </div>
+            `;
+          }
           if (acum) {
             html += `
               <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; border-top: 1.5px solid var(--border-light); padding-top: 6px; margin-top: 2px; gap: 15px;">
@@ -901,7 +919,36 @@
         type: "category",
         data: months,
         axisTick: { alignWithLabel: true },
-        axisLabel: { fontWeight: 700 }
+        axisLabel: {
+          interval: 0,
+          formatter: (value) => {
+            const c = agg.get(value);
+            const total = (c?.at ?? 0) + (c?.ft ?? 0) + (c?.no ?? 0);
+            return `{month|${value}}\n{total|${fmtInt(total)}}`;
+          },
+          rich: {
+            month: {
+              fontWeight: 700,
+              fontSize: 11,
+              color: "#475569",
+              align: "center",
+              lineHeight: 16,
+              padding: [0, 0, 4, 0]
+            },
+            total: {
+              fontWeight: 800,
+              fontSize: 11,
+              lineHeight: 14,
+              color: "#1e293b",
+              align: "center",
+              borderColor: "#94a3b8",
+              borderWidth: 1.5,
+              borderRadius: 4,
+              padding: [2, 6],
+              backgroundColor: "#f8fafc"
+            }
+          }
+        }
       },
       yAxis: [
         {
@@ -1084,14 +1131,14 @@
           data: pAT_acum.map(v => +(+v).toFixed(2)),
           showSymbol: true,         
           symbol: "circle",         
-          symbolSize: 1,            
+          symbolSize: 7,            
           showAllSymbol: true,      
           lineStyle: { 
             width: 3.5,         
             type: "solid",      
             color: "#7c3aed"    
           },
-          itemStyle: { color: "#7c3aed" },
+          itemStyle: { color: "#7c3aed", borderColor: "#fff", borderWidth: 2 },
           label: {
             show: true,             
             position: "bottom",   
@@ -1130,11 +1177,11 @@
           yAxisIndex: 1,
           data: avgDem,
           symbol: "circle",
-          symbolSize: 0,          
+          symbolSize: 7,          
           showSymbol: true,       
           connectNulls: true,
           lineStyle: { width: 3, color: COLORS.blue },
-          itemStyle: { color: COLORS.blue },
+          itemStyle: { color: COLORS.blue, borderColor: "#fff", borderWidth: 2 },
           label: {
             show: true,
             position: "top",      
@@ -1170,7 +1217,252 @@
 
     chartMes.setOption(option, true);
     window.addEventListener("resize", () => chartMes && chartMes.resize(), { passive: true });
+    return months;
   }
+
+  /* ============================
+     CHART 1B: CANTIDAD DE VA POR FECHA DE EMISIÓN
+  ============================ */
+  function getEmissionDateStr(r) {
+    return r["FECHA DE EMISION NECESIDAD"] || r["FECHA EMISION SOLPED"] || r["FECHA EMISION OC"] || r["FECHA DE EMISION"] || "";
+  }
+
+  function buildChartEmision(rows, targetMonths) {
+    const el = document.getElementById("cumpl_chartEmision");
+    if (!el || !window.echarts) return;
+
+    if (!chartEmision) chartEmision = echarts.init(el, null, { renderer: "canvas" });
+
+    // Sincronización estricta: sólo mostrar los meses que muestra el gráfico de Cumplimiento por mes
+    const months = (targetMonths && targetMonths.length)
+      ? [...targetMonths]
+      : (lastChartMesMonths && lastChartMesMonths.length ? [...lastChartMesMonths] : []);
+
+    const agg = new Map();
+    for (const m of months) {
+      agg.set(m, { lines: 0, vaOrders: new Set() });
+    }
+
+    const allowedMonths = months.length ? new Set(months) : null;
+
+    for (const r of rows) {
+      const dateStr = getEmissionDateStr(r);
+      const d = parseDateAny(dateStr);
+      if (!d) continue;
+
+      const mk = monthKey(d);
+      // Ignorar fechas de emisión fuera del rango de meses visible en Cumplimiento por Mes
+      if (allowedMonths && !allowedMonths.has(mk)) continue;
+
+      if (!agg.has(mk)) {
+        agg.set(mk, { lines: 0, vaOrders: new Set() });
+      }
+      const c = agg.get(mk);
+      c.lines += 1;
+
+      const va = clean(r["NRO. VA01/VA21"]);
+      if (va) {
+        c.vaOrders.add(va);
+      } else {
+        const sol = clean(r["NRO. SOLPED"]);
+        if (sol) c.vaOrders.add(sol);
+      }
+    }
+
+    const chartMonths = months.length ? months : [...agg.keys()].sort();
+    const linesData = chartMonths.map(m => agg.get(m)?.lines ?? 0);
+    const vaData = chartMonths.map(m => agg.get(m)?.vaOrders?.size ?? 0);
+
+    const option = {
+      animation: true,
+      animationDuration: 750,
+      animationDurationUpdate: 500,
+      animationEasing: "cubicOut",
+      animationEasingUpdate: "cubicOut",
+      grid: { left: 56, right: 65, top: 45, bottom: 60 },
+      tooltip: {
+        trigger: "axis",
+        axisPointer: { type: "shadow" },
+        confine: true,
+        backgroundColor: "transparent",
+        borderColor: "transparent",
+        shadowColor: "transparent",
+        shadowBlur: 0,
+        borderWidth: 0,
+        padding: 0,
+        formatter: (params) => {
+          const axis = params?.[0]?.axisValue ?? "";
+          const byName = Object.fromEntries(params.map(p => [p.seriesName, p]));
+          const lineParam = byName["Líneas de VA"];
+          const vaParam = byName["Cantidad de VA (Pedidos)"];
+
+          const nLines = lineParam ? lineParam.value : 0;
+          const nVA = vaParam ? vaParam.value : 0;
+          const ratio = nVA ? (nLines / nVA).toFixed(1).replace(".", ",") : "-";
+
+          let html = `
+            <div style="font-family: var(--font-body), sans-serif; padding: 10px 14px; min-width: 210px; background: #ffffff; border-radius: 8px; box-shadow: var(--shadow-xl); border: 1.5px solid var(--border-light); color: var(--text-main);">
+              <div style="font-family: var(--font-main), sans-serif; font-weight: 800; font-size: 0.9rem; margin-bottom: 8px; border-bottom: 1.5px solid var(--border-light); padding-bottom: 6px; color: var(--text-main); letter-spacing: 0.02em;">
+                📅 Mes de Emisión: ${axis}
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 7px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; gap: 15px;">
+                  <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-muted);">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: #0d9488;"></span>
+                    Líneas de VA
+                  </span>
+                  <span style="font-weight: 800; color: #0f766e;">${fmtInt(nLines)}</span>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; gap: 15px;">
+                  <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-muted);">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b;"></span>
+                    Cantidad de VA (Pedidos)
+                  </span>
+                  <span style="font-weight: 800; color: #b45309;">${fmtInt(nVA)}</span>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; border-top: 1.5px solid var(--border-light); padding-top: 6px; margin-top: 2px; gap: 15px;">
+                  <span style="font-weight: 600; color: var(--text-muted);">Promedio Líneas/VA</span>
+                  <span style="font-weight: 800; color: var(--text-main);">${ratio}</span>
+                </div>
+              </div>
+            </div>
+          `;
+          return html;
+        }
+      },
+      legend: {
+        bottom: 8,
+        left: "center",
+        itemWidth: 14,
+        itemHeight: 10,
+        textStyle: { fontWeight: 800, color: "#334155" }
+      },
+      xAxis: {
+        type: "category",
+        data: chartMonths,
+        axisTick: { alignWithLabel: true },
+        axisLabel: { fontWeight: 700, color: "#475569" }
+      },
+      yAxis: [
+        {
+          type: "value",
+          name: "Líneas de VA",
+          nameTextStyle: { fontWeight: 800, color: "#0d9488", padding: [0, 0, 4, 0] },
+          axisLabel: { fontWeight: 700, formatter: (v) => fmtInt(v) },
+          splitLine: { lineStyle: { color: "rgba(15,23,42,0.08)" } },
+          boundaryGap: [0, '15%']
+        },
+        {
+          type: "value",
+          name: "Cantidad de VA",
+          position: "right",
+          nameTextStyle: { fontWeight: 800, color: "#f59e0b", padding: [0, 0, 4, 0] },
+          axisLabel: { fontWeight: 700, formatter: (v) => fmtInt(v) },
+          splitLine: { show: false },
+          boundaryGap: [0, '35%']
+        }
+      ],
+      series: [
+        {
+          name: "Líneas de VA",
+          type: "bar",
+          data: linesData,
+          barMaxWidth: 44,
+          itemStyle: {
+            color: {
+              type: "linear",
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: "#0d9488" },
+                { offset: 1, color: "#0f766e" }
+              ]
+            },
+            borderRadius: [5, 5, 0, 0]
+          },
+          label: {
+            show: true,
+            position: "insideBottom",
+            distance: 12,
+            formatter: (p) => fmtInt(p.value),
+            fontWeight: 800,
+            fontSize: 11,
+            color: "#ffffff"
+          }
+        },
+        {
+          name: "Cantidad de VA (Pedidos)",
+          type: "line",
+          yAxisIndex: 1,
+          data: vaData,
+          symbol: "circle",
+          symbolSize: 8,
+          lineStyle: { width: 3, color: "#f59e0b" },
+          itemStyle: { color: "#f59e0b", borderColor: "#fff", borderWidth: 2 },
+          label: {
+            show: true,
+            position: "top",
+            distance: 6,
+            formatter: (p) => fmtInt(p.value),
+            fontWeight: 800,
+            fontSize: 10,
+            backgroundColor: "rgba(255,255,255,0.92)",
+            borderColor: "rgba(245, 158, 11, 0.4)",
+            borderWidth: 1,
+            borderRadius: 3,
+            padding: [2, 4],
+            color: "#b45309"
+          }
+        }
+      ]
+    };
+
+    chartEmision.setOption(option, true);
+    window.addEventListener("resize", () => chartEmision && chartEmision.resize(), { passive: true });
+  }
+
+  function switchChartTab(tab) {
+    currentChartTab = tab;
+    const btnCumpl = document.getElementById("btnTabCumplimiento");
+    const btnEmis = document.getElementById("btnTabEmision");
+    const elMes = document.getElementById("cumpl_chartMes");
+    const elEmis = document.getElementById("cumpl_chartEmision");
+    const titleText = document.getElementById("cumpl_mainPanelTitleText");
+
+    if (tab === "emision") {
+      if (btnCumpl) btnCumpl.classList.remove("active");
+      if (btnEmis) btnEmis.classList.add("active");
+      if (elMes) elMes.style.display = "none";
+      if (elEmis) elEmis.style.display = "block";
+      if (titleText) titleText.textContent = "CANTIDAD DE VA POR FECHA DE EMISIÓN";
+
+      if (lastFilteredRows && lastFilteredRows.length) {
+        buildChartEmision(lastFilteredRows, lastChartMesMonths);
+      }
+      if (chartEmision) {
+        chartEmision.resize();
+      }
+    } else {
+      if (btnCumpl) btnCumpl.classList.add("active");
+      if (btnEmis) btnEmis.classList.remove("active");
+      if (elMes) elMes.style.display = "block";
+      if (elEmis) elEmis.style.display = "none";
+      if (titleText) titleText.textContent = "CUMPLIMIENTO POR MES";
+
+      if (chartMes) {
+        chartMes.resize();
+      }
+    }
+  }
+  window.switchChartTab = switchChartTab;
+
+  function openChartHelp() {
+    if (currentChartTab === "emision") {
+      alert("CANTIDAD DE VA POR FECHA DE EMISIÓN:\n\nMuestra la cantidad de pedidos (VA01/VA21) y líneas (posiciones) cargadas mes a mes en el sistema según su Fecha de Emisión.\n\n• Barras Verdes: Cantidad total de líneas de VA cargadas en el mes.\n• Línea Naranja: Cantidad de pedidos únicos (VA01) emitidos en el mes.");
+    } else {
+      alert("CUMPLIMIENTO POR MES:\n\nEl gráfico de barras apiladas nos muestra el cumplimiento mes a mes. Cada barra suma 100% que equivale a la cantidad de items comprometidos a entregar y se divide en: Entregados a término (AT), Entregados fuera de término (FT) y No entregados (NE).\n\n💡 El cumplimiento AT establecido para el año 2026 es del 78%.");
+    }
+  }
+  window.openChartHelp = openChartHelp;
 
   /* ============================
      CHART 2: Trend lines (ECharts) ESTRICTO
@@ -1185,7 +1477,7 @@
       const mk = monthKey(d);
       monthsSet.add(mk);
 
-      if (!agg.has(mk)) agg.set(mk, { at: 0, ft: 0, no: 0 });
+      if (!agg.has(mk)) agg.set(mk, { at: 0, ft: 0, no: 0, comp: 0 });
       const c = agg.get(mk);
 
       let rAt = toNumber(r[AT_COL]);
@@ -1195,9 +1487,10 @@
       c.at += rAt;
       c.ft += rFt;
       c.no += rNo;
+      c.comp += toNumber(r["COMPROMETIDOS"]) || (rAt + rFt + rNo);
     }
 
-    const months = [...monthsSet].sort();
+    const months = (lastChartMesMonths && lastChartMesMonths.length) ? [...lastChartMesMonths] : [...monthsSet].sort();
 
     const pAT = months.map(m => {
       const c = agg.get(m); const t = (c?.at ?? 0) + (c?.ft ?? 0) + (c?.no ?? 0);
@@ -1207,10 +1500,18 @@
       const c = agg.get(m); const t = (c?.at ?? 0) + (c?.ft ?? 0) + (c?.no ?? 0);
       return t ? ((c.ft ?? 0) / t) * 100 : 0;
     });
-    const pNO = months.map(m => {
-      const c = agg.get(m); const t = (c?.at ?? 0) + (c?.ft ?? 0) + (c?.no ?? 0);
-      return t ? ((c.no ?? 0) / t) * 100 : 0;
-    });
+
+    const pAT_acum = [];
+    let sumaEntregadosATAcum = 0;
+    let sumaComprometidosAcum = 0;
+
+    for (let i = 0; i < months.length; i++) {
+      const c = agg.get(months[i]);
+      sumaEntregadosATAcum += (c?.at ?? 0);
+      sumaComprometidosAcum += (c?.comp ?? 0);
+      const pctAcum = sumaComprometidosAcum ? (sumaEntregadosATAcum / sumaComprometidosAcum) * 100 : 0;
+      pAT_acum.push(pctAcum);
+    }
 
     const el = document.getElementById("cumpl_chartTendencia");
     if (!el || !window.echarts) return;
@@ -1249,7 +1550,7 @@
                   <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
                   ${p.seriesName}
                 </span>
-                <span style="font-weight: 800; color: var(--text-main);">${_fmtNum1(p.data)}%</span>
+                <span style="font-weight: 800; color: var(--text-main);">${_fmtNum1(p.value ?? p.data)}%</span>
               </div>
             `;
           }
@@ -1294,6 +1595,7 @@
               warn: { fontWeight: 950, color: "#7f1d1d", backgroundColor: "rgba(239,68,68,0.18)", borderColor: "#ef4444", borderWidth: 1, borderRadius: 4, padding: [2, 4] }
             }
           },
+          labelLayout: { hideOverlap: true },
           zlevel: 5, z: 5
         },
         {
@@ -1304,17 +1606,40 @@
           lineStyle: { width: 3, color: COLORS.amber },
           itemStyle: { color: COLORS.amber, borderColor: "#fff", borderWidth: 2 },
           label: { show: true, position: "top", fontWeight: 900, formatter: (p) => _fmtPct(p.data) },
+          labelLayout: { hideOverlap: true },
           zlevel: 5, z: 5
         },
         {
-          name: "No Entregados %",
+          name: "%AT Acumulado",
           type: "line",
-          data: pNO.map(v => +(+v).toFixed(2)),
+          data: pAT_acum.map((v, i) => {
+            const atVal = pAT[i];
+            const isHigher = (v > atVal && (v - atVal) > 2.5);
+            return {
+              value: +(+v).toFixed(2),
+              label: {
+                position: isHigher ? "top" : "bottom"
+              }
+            };
+          }),
+          symbol: "circle",
           symbolSize: 7,
-          lineStyle: { width: 3, color: COLORS.red },
-          itemStyle: { color: COLORS.red, borderColor: "#fff", borderWidth: 2 },
-          label: { show: true, position: "top", fontWeight: 900, formatter: (p) => _fmtPct(p.data) },
-          zlevel: 5, z: 5
+          lineStyle: { width: 3, color: "#7c3aed" },
+          itemStyle: { color: "#7c3aed", borderColor: "#fff", borderWidth: 2 },
+          label: {
+            show: true,
+            distance: 6,
+            formatter: (p) => _fmtPct(p.value ?? p.data),
+            fontWeight: 850,
+            color: "#6d28d9",
+            backgroundColor: "rgba(255, 255, 255, 0.88)",
+            borderColor: "rgba(124, 58, 237, 0.3)",
+            borderWidth: 1,
+            borderRadius: 3,
+            padding: [2, 4]
+          },
+          labelLayout: { hideOverlap: true },
+          zlevel: 6, z: 6
         }
       ]
     };
@@ -1388,14 +1713,22 @@
   ============================ */
   function applyAll() {
     const rows = filteredRowsNoMes();
+    lastFilteredRows = rows;
     const months = buildMesSelect(rows);
 
     updateKPIsGeneral(rows);
     updateKPIsMonthly(rows, months);
 
-    buildChartMes(rows);
+    const chartMesMonths = buildChartMes(rows);
+    buildChartEmision(rows, chartMesMonths);
     buildChartTendencia(rows);
     updateIncompletosCount();
+
+    if (currentChartTab === "emision" && chartEmision) {
+      chartEmision.resize();
+    } else if (chartMes) {
+      chartMes.resize();
+    }
   }
 
   /* ============================

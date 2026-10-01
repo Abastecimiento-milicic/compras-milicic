@@ -35,3 +35,11 @@
 .page-almacen .filter label {
   background-color: var(--col-brand);
 }
+
+#chartMes {
+  height: 400px !important;
+}
+
+.chart-wrap:has(#chartMes) {
+  height: 400px;
+}

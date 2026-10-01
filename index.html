@@ -13,7 +13,7 @@
     href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="base.css?v=20260902_v2" />
-  <link rel="stylesheet" href="cumplimiento.css?v=20260902_v2" />
+  <link rel="stylesheet" href="cumplimiento.css?v=20261001_v2" />
   <script defer src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/lib/browser.min.js"></script>
@@ -317,17 +317,23 @@
       </section>
 
       <section class="panel">
-        <div class="panel-title">CUMPLIMIENTO POR MES
-          <button class="help-btn" onclick="openHelp('Gráfico — Cumplimiento por Mes', `
-            <p>El gráfico de barras apiladas nos muestra el cumplimiento mes a mes. Cada barra suma 100% que equivale a la cantidad de items 
-            comprometidos a entregar y se divide en: Entregados a término (AT), Entregados fuera de término (FT) y No entregados (NE)</p>
-            <div class=&quot;hm-tip&quot;>💡 El cumplimiento AT establecido para el año 2026 es del 78%.</div>
-          `)" title="Ayuda sobre el gráfico por mes">ℹ</button>
+        <div class="panel-title" id="cumpl_mainPanelTitle">
+          <span id="cumpl_mainPanelTitleText">CUMPLIMIENTO POR MES</span>
+          <button class="help-btn" id="cumpl_mainChartHelp" onclick="openChartHelp()" title="Ayuda sobre el gráfico">ℹ</button>
         </div>
         <div class="panel-body">
+          <div class="chart-subtabs-bar">
+            <button class="subtab-btn active" id="btnTabCumplimiento" onclick="switchChartTab('cumplimiento')">
+              📊 Cumplimiento por Mes
+            </button>
+            <button class="subtab-btn" id="btnTabEmision" onclick="switchChartTab('emision')">
+              📅 Cantidad de VA por Fecha de Emisión
+            </button>
+          </div>
           <div class="chart-card">
             <div class="chart-wrap">
               <div id="cumpl_chartMes" class="chart-box"></div>
+              <div id="cumpl_chartEmision" class="chart-box" style="display: none;"></div>
             </div>
           </div>
         </div>
@@ -339,8 +345,7 @@
             <p>Indica la tendencia/comportamiento de estos indicadores:<br>
                                   🔹Entregados a término (AT)<br>
                                   🔹Entregados fuera de término (FT)<br>
-                                  🔹No entregados (NE)<br>
-                                  🔹Promedio mensual acumulado(AT)<br>
+                                  🔹Promedio mensual acumulado (%AT Acumulado)<br>
                                   <p>
             <div class=&quot;hm-tip&quot;>💡 La línea de tendencia ayuda a ver si el desempeño mejora o empeora a lo largo del tiempo.</div>
           `)" title="Ayuda sobre la tendencia">ℹ</button>
@@ -401,7 +406,7 @@
       alert(messages[section] || 'Ayuda no disponible para esta sección.');
     }
   </script>
-  <script defer src="cumplimiento.js?v=20260902_v2"></script>
+  <script defer src="cumplimiento.js?v=20261001_v5"></script>
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       if (typeof window.initCumplimiento === 'function') {

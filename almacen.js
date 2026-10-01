@@ -638,7 +638,7 @@ function buildChartMes(rows) {
       animationDurationUpdate: 600,
       animationEasing: "cubicOut",
       animationEasingUpdate: "cubicOut",
-      grid: { left: 56, right: 70, top: 40, bottom: 62 },
+      grid: { left: 56, right: 70, top: 40, bottom: 82 },
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "shadow" },
@@ -699,6 +699,19 @@ function buildChartMes(rows) {
               </div>
             `;
           }
+          const idx = at ? at.dataIndex : (ft ? ft.dataIndex : (ne ? ne.dataIndex : -1));
+          if (idx >= 0) {
+            const totMes = (qAT[idx] ?? 0) + (qFT[idx] ?? 0) + (qNO[idx] ?? 0);
+            html += `
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; border-top: 1.5px solid var(--border-light); padding-top: 6px; margin-top: 2px; gap: 15px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--text-main);">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: #64748b;"></span>
+                  Total Pedidos
+                </span>
+                <span style="font-weight: 800; color: var(--text-main);">${fmtInt(totMes)}</span>
+              </div>
+            `;
+          }
           if (acum) {
             html += `
               <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; border-top: 1.5px solid var(--border-light); padding-top: 6px; margin-top: 2px; gap: 15px;">
@@ -740,7 +753,36 @@ function buildChartMes(rows) {
         type: "category",
         data: months,
         axisTick: { alignWithLabel: true },
-        axisLabel: { fontWeight: 700 }
+        axisLabel: {
+          interval: 0,
+          formatter: (value) => {
+            const c = agg.get(value);
+            const total = (c?.at ?? 0) + (c?.ft ?? 0) + (c?.no ?? 0);
+            return `{month|${value}}\n{total|${fmtInt(total)}}`;
+          },
+          rich: {
+            month: {
+              fontWeight: 700,
+              fontSize: 11,
+              color: "#475569",
+              align: "center",
+              lineHeight: 16,
+              padding: [0, 0, 4, 0]
+            },
+            total: {
+              fontWeight: 800,
+              fontSize: 11,
+              lineHeight: 14,
+              color: "#1e293b",
+              align: "center",
+              borderColor: "#94a3b8",
+              borderWidth: 1.5,
+              borderRadius: 4,
+              padding: [2, 6],
+              backgroundColor: "#f8fafc"
+            }
+          }
+        }
       },
       yAxis: [
         {
