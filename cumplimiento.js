@@ -549,7 +549,7 @@
     setText("cumpl_kpiATpct", fmtPct01(pctAT));
     setText("cumpl_kpiATqty", `Cantidad: ${fmtInt(t.at)}`);
     const elAT = document.getElementById("cumpl_kpiATpct");
-    if (elAT) elAT.style.color = (isFinite(pctAT) && pctAT >= 0.78) ? "#16a34a" : "#ef4444";
+    if (elAT) elAT.style.color = (isFinite(pctAT) && pctAT >= 0.75) ? "#16a34a" : "#ef4444";
 
     const avgG = avgDelay(rows);
     setText("cumpl_kpiDemoraAvg", isNaN(avgG) ? "-" : (Math.round(avgG) + " d"));
@@ -737,12 +737,12 @@
     } else {
       for (let i = 0; i < months.length - 1; i++) {
         const anoActual = parseInt(months[i].substring(0, 4), 10);
-        const hActual = (anoActual >= 2026) ? 78 : 75;
+        const hActual = (anoActual >= 2026) ? 75 : 75;
         
         const isLastSegment = (i === months.length - 2);
 
         const anoSig = parseInt(months[i + 1].substring(0, 4), 10);
-        const hSig = (anoSig >= 2026) ? 78 : 75;
+        const hSig = (anoSig >= 2026) ? 75 : 75;
 
         const showLabelOnHorizontal = isLastSegment && (hActual === hSig);
 
@@ -974,7 +974,7 @@
           stack: "pct",
           data: pAT.map(v => {
             const val = +(+v).toFixed(4);
-            if (val < 78) {
+            if (val < 75) {
               return {
                 value: val,
                 itemStyle: {
@@ -1013,7 +1013,7 @@
               if (!q) return "";
               if (pct < 6) return "";
               const pctRound = Math.round(pct);
-              if (pct < 78) return `{warn|${fmtInt(q)}\n⚠ (${pctRound}%)}`;
+              if (pct < 75) return `{warn|${fmtInt(q)}\n⚠ (${pctRound}%)}`;
               return `${fmtInt(q)}\n(${pctRound}%)`;
             },
             rich: {
@@ -1459,7 +1459,7 @@
     if (currentChartTab === "emision") {
       alert("CANTIDAD DE VA POR FECHA DE EMISIÓN:\n\nMuestra la cantidad de pedidos (VA01/VA21) y líneas (posiciones) cargadas mes a mes en el sistema según su Fecha de Emisión.\n\n• Barras Verdes: Cantidad total de líneas de VA cargadas en el mes.\n• Línea Naranja: Cantidad de pedidos únicos (VA01) emitidos en el mes.");
     } else {
-      alert("CUMPLIMIENTO POR MES:\n\nEl gráfico de barras apiladas nos muestra el cumplimiento mes a mes. Cada barra suma 100% que equivale a la cantidad de items comprometidos a entregar y se divide en: Entregados a término (AT), Entregados fuera de término (FT) y No entregados (NE).\n\n💡 El cumplimiento AT establecido para el año 2026 es del 78%.");
+      alert("CUMPLIMIENTO POR MES:\n\nEl gráfico de barras apiladas nos muestra el cumplimiento mes a mes. Cada barra suma 100% que equivale a la cantidad de items comprometidos a entregar y se divide en: Entregados a término (AT), Entregados fuera de término (FT) y No entregados (NE).\n\n💡 El cumplimiento AT establecido para el año 2026 es del 75%.");
     }
   }
   window.openChartHelp = openChartHelp;
@@ -1588,7 +1588,7 @@
             position: "top",
             formatter: (p) => {
               const v = +p.data || 0;
-              return (v < 78) ? `{warn|⚠ ${_fmtPct(v)}}` : `{ok|${_fmtPct(v)}}`;
+              return (v < 75) ? `{warn|⚠ ${_fmtPct(v)}}` : `{ok|${_fmtPct(v)}}`;
             },
             rich: {
               ok: { fontWeight: 900, color: COLORS.green },
